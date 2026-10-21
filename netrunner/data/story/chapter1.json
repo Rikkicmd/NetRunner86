@@ -1,0 +1,123 @@
+{
+  "number": 1,
+  "title": "CARRIER DETECT",
+  "scenes": [
+    {
+      "type": "text",
+      "art": "TERMINAL",
+      "text": "OCTOBER 1986. 2:13 AM.\n\nThe house is asleep. The only light in your bedroom is the green glow of a secondhand ACME PC/XT and the blinking LEDs of a 2400 baud modem you are still paying off.\n\nYou go by {handle} on the boards. Nobody there knows your real name. That is the point."
+    },
+    {
+      "type": "text",
+      "cutscene": "MODEM",
+      "speaker": "THE DEAD LETTER BBS",
+      "text": "*** 1 NEW PRIVATE MESSAGE ***\n\nFROM: CASSANDRA\nTO: {handle}\n\nI've watched you poke around the phone company switches. You're careful. I like careful.\n\nI need someone for a job that matters. But first, prove you're more than talk.\n\nRidgemont High still runs its admin box on a dial-up line. Get in. Pull the staff directory. Don't get traced.\n\n- C"
+    },
+    {
+      "type": "mission",
+      "mission": {
+        "id": "story_1_ridgemont",
+        "title": "Proof of Skill",
+        "client": "CASSANDRA",
+        "brief": "Ridgemont High's admin computer is barely protected. Scan the subnet, connect, crack the keypad lock and download staff_dir.txt. Tip: read files while you're in there.\n\nNEW HERE? Commands: scan, connect <ip>, crack, ls, cat <file>, get <file>, dc. Watch the TRACE meter in your prompt. If it hits 100% you're caught.",
+        "reward": 150,
+        "rep": 3,
+        "trace_rate": 3,
+        "objectives": [
+          {"type": "download", "host": "10.0.1.20", "file": "staff_dir.txt"}
+        ],
+        "hosts": {
+          "10.0.1.20": {
+            "name": "RIDGEMONT-ADMIN",
+            "security": 1,
+            "lock": "keypad",
+            "banner": "RIDGEMONT HIGH SCHOOL - ADMINISTRATIVE SYSTEM\nUNAUTHORIZED ACCESS IS A VIOLATION OF DISTRICT POLICY",
+            "files": {
+              "staff_dir.txt": "STAFF DIRECTORY 86/87\nPRINCIPAL ......... R. VERNON\nCOMPUTER LAB ...... M. HALLORAN\nGUIDANCE .......... J. FERRIS\nNIGHT SYSOP ....... (contractor, Omnidyne Systems)",
+              "grades.db": "[binary data - 48 student records]",
+              "sysop_note.txt": "Halloran - Omnidyne's tech left their relay password taped to the lab terminal AGAIN. I've told them. 'nightowl' is not a secure password.\n- Vernon"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "speaker": "CASSANDRA",
+      "text": "Clean work. And you noticed the Omnidyne contractor, didn't you?\n\nThat's the real job. Omnidyne Systems builds 'network management software' for the phone company. Something in their lab is called BASILISK, and I need to know what it is."
+    },
+    {
+      "type": "choice",
+      "prompt": "How do you reply?",
+      "options": [
+        {
+          "label": "\"Who are you, really?\"",
+          "flag": "asked_identity",
+          "text": "CASSANDRA: Someone who used to work there. Someone who quit when they saw the spec sheets. That's all you get for now."
+        },
+        {
+          "label": "\"What's it pay?\"",
+          "flag": "asked_money",
+          "text": "CASSANDRA: 600 credits on delivery. More if what you find is as bad as I think it is. Mercenary. I can work with that."
+        },
+        {
+          "label": "\"Why me?\"",
+          "flag": "asked_why",
+          "text": "CASSANDRA: Because nobody at Omnidyne has ever heard of you. Yet."
+        }
+      ]
+    },
+    {
+      "type": "mission",
+      "mission": {
+        "id": "story_1_omnidyne",
+        "title": "Basilisk",
+        "client": "CASSANDRA",
+        "brief": "Omnidyne has two machines on this exchange: a maintenance relay and the R&D mainframe. The mainframe's lock is nasty. Cracking it the hard way will light up the trace. Look for an easier way in.\n\nGet project_basilisk.txt from the mainframe, and wipe access.log on the relay so they never know you passed through.",
+        "reward": 600,
+        "rep": 8,
+        "trace_rate": 4,
+        "objectives": [
+          {"type": "download", "host": "192.168.7.2", "file": "project_basilisk.txt"},
+          {"type": "delete", "host": "192.168.7.1", "file": "access.log"}
+        ],
+        "hosts": {
+          "192.168.7.1": {
+            "name": "OMNI-RELAY",
+            "security": 1,
+            "lock": "keypad",
+            "password": "nightowl",
+            "banner": "OMNIDYNE SYSTEMS // MAINTENANCE RELAY 7",
+            "files": {
+              "access.log": "02:31 CONNECT 555-0199 ... <- that's you\n02:31 AUTH OK",
+              "ops_memo.txt": "To all night staff: the R&D mainframe operator password has been rotated per policy. New password is 'tiresias'. Please stop writing it on the whiteboard.",
+              "readme.txt": "Relay 7 forwards maintenance traffic to RND-MAINFRAME (192.168.7.2)."
+            }
+          },
+          "192.168.7.2": {
+            "name": "RND-MAINFRAME",
+            "security": 3,
+            "lock": "wordlist",
+            "password": "tiresias",
+            "banner": "OMNIDYNE R&D  //  CLEARANCE LEVEL 4 REQUIRED",
+            "files": {
+              "project_basilisk.txt": "PROJECT BASILISK - INTERNAL ONLY\n\nPhase 1: passive monitoring of all switched calls in the Mid-Atlantic exchange.\nPhase 2: automated identification of modem users by line signature.\nPhase 3: 'pre-emptive disconnection' of flagged individuals.\n\nStatus: PHASE 1 LIVE. PHASE 2 IN TESTING.",
+              "budget_q3.txt": "Federal contract #DX-1147: $14,200,000",
+              "lunch_menu.txt": "Thursday: mystery meatloaf"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "cutscene": "BASILISK",
+      "speaker": "CASSANDRA",
+      "text": "...\n\nPhase 2 is already in testing, {handle}. They can fingerprint a modem by the way it hisses on the line. Every hacker on the East Coast is about to be on a list.\n\nIncluding you. Including me.\n\nStay off the big boards for a while. I'll be in touch."
+    },
+    {
+      "type": "text",
+      "text": "END OF CHAPTER 1\n\nThe Job Board is still open if you want to earn some credits and upgrade your rig before Chapter 2."
+    }
+  ]
+}

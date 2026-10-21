@@ -1,0 +1,129 @@
+{
+  "number": 2,
+  "title": "PHASE TWO",
+  "scenes": [
+    {
+      "type": "text",
+      "art": "TERMINAL",
+      "text": "NOVEMBER 1986. 11:48 PM.\n\nThree weeks. No word from CASSANDRA.\n\nYou kept your head down like she said. Small jobs, clean lines, no big boards. But tonight the Dead Letter BBS won't answer. Busy signal, every time, for six hours straight.\n\nBoards don't stay busy for six hours. Somebody took it down."
+    },
+    {
+      "type": "text",
+      "cutscene": "RING",
+      "speaker": "UNKNOWN CALLER",
+      "text": "*** INCOMING MESSAGE ON YOUR PRIVATE LINE ***\n\n{handle}. Don't hang up.\n\nThey call me GRIFFIN. I ran the Dead Letter's backup node until Omnidyne security raided the sysop's apartment last night. The main board is gone. But the backup still answers, and CASSANDRA left something in her mailbox before she went dark.\n\nI can't get in. They changed the sysop password when they seized the board. You can."
+    },
+    {
+      "type": "mission",
+      "mission": {
+        "id": "story_2_deadletter",
+        "title": "Dead Drop",
+        "client": "GRIFFIN",
+        "brief": "The Dead Letter backup node is still on the line. Get into it and read CASSANDRA's last message (cassandra.msg). Feds were on this board last night, so expect them to be watching the trace.",
+        "reward": 250,
+        "rep": 4,
+        "trace_rate": 5,
+        "objectives": [
+          {"type": "read", "host": "10.66.6.13", "file": "cassandra.msg"}
+        ],
+        "hosts": {
+          "10.66.6.13": {
+            "name": "DEADLETTER-BAK",
+            "security": 2,
+            "lock": "wordlist",
+            "banner": "THE DEAD LETTER BBS // BACKUP NODE\n*** THIS SYSTEM HAS BEEN SEIZED. ALL ACCESS IS MONITORED. ***",
+            "files": {
+              "cassandra.msg": "To whoever gets this. Probably you, {handle}.\n\nPhase 2 goes live at the Hollow Creek exchange on the 21st. Every modem on that switch gets fingerprinted and logged to a watchlist.\n\nI built a jammer: noise.bin. Load it onto the exchange switch and the fingerprints come out as static. The exchange relay's maintenance password is 'lineman86'. I couldn't get close enough to do it myself.\n\nDon't trust anyone who says they know me.\n\n- C",
+              "seizure_notice.txt": "BY ORDER OF THE U.S. DISTRICT COURT: the contents of this system have been seized as evidence.",
+              "userlist.dat": "[214 user records - purged]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "speaker": "GRIFFIN",
+      "text": "You got in? What did she say? Send it to me. Every word.\n\nI can help you with the exchange. I know that switch. Just tell me what she left you."
+    },
+    {
+      "type": "choice",
+      "prompt": "CASSANDRA said not to trust anyone who claims to know her. What do you tell GRIFFIN?",
+      "options": [
+        {
+          "label": "Send GRIFFIN the whole message",
+          "flag": "trusted_griffin",
+          "text": "GRIFFIN: ...Thank you, {handle}. I'll meet you on the exchange line. I'll keep the operators busy while you work."
+        },
+        {
+          "label": "Tell GRIFFIN the board was empty",
+          "flag": "lied_to_griffin",
+          "text": "GRIFFIN: Empty. Right.\n\nThe line goes quiet for a long time. Then: \"Good luck, {handle}.\" Click."
+        }
+      ]
+    },
+    {
+      "type": "mission",
+      "mission": {
+        "id": "story_2_exchange",
+        "title": "Static",
+        "client": "CASSANDRA (by dead drop)",
+        "brief": "The Hollow Creek exchange has two machines on the line: a maintenance relay and the ESS switch that runs Phase 2. The switch is locked down hard. Use the relay password from CASSANDRA's message, look around for a way into the switch, then upload noise.bin to it and grab the watchlist so you know who they're after.",
+        "reward": 900,
+        "rep": 10,
+        "trace_rate": 5,
+        "payload": ["noise.bin"],
+        "objectives": [
+          {"type": "upload", "host": "172.31.21.2", "file": "noise.bin"},
+          {"type": "download", "host": "172.31.21.2", "file": "watchlist.dat"}
+        ],
+        "hosts": {
+          "172.31.21.1": {
+            "name": "HC-MAINT-RELAY",
+            "security": 2,
+            "lock": "keypad",
+            "password": "lineman86",
+            "banner": "HOLLOW CREEK CENTRAL OFFICE // MAINTENANCE RELAY",
+            "files": {
+              "shift_log.txt": "23:10 Omnidyne techs on site for 'Phase 2 acceptance test'.\n23:40 Omnidyne changed the ESS operator password AGAIN. New one is 'cerberus'. They taped it to the frame. Of course they did.",
+              "readme.txt": "Relay forwards craft access to HC-ESS-SWITCH (172.31.21.2)."
+            }
+          },
+          "172.31.21.2": {
+            "name": "HC-ESS-SWITCH",
+            "security": 3,
+            "lock": "keypad",
+            "password": "cerberus",
+            "banner": "HOLLOW CREEK ESS // OMNIDYNE BASILISK PHASE 2 // ACCEPTANCE TEST IN PROGRESS",
+            "files": {
+              "watchlist.dat": "BASILISK PHASE 2 - FLAGGED LINE SIGNATURES\n\n0001  555-0142  'PH4NT0M'\n0002  555-0177  'ACID_BURN'\n0003  555-0199  '{handle}'\n0004  555-0108  'CASSANDRA'  STATUS: LOCATED\n0005  555-0123  'GRIFFIN'    STATUS: INFORMANT",
+              "phase2.cfg": "fingerprint_mode=ACTIVE\nreport_to=OMNIDYNE-RND\ndisconnect_flagged=PENDING_APPROVAL",
+              "basilisk.log": "Signature capture running. 1,882 lines profiled."
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "requires": {"trusted_griffin": true},
+      "speaker": "WATCHLIST.DAT",
+      "text": "0005  555-0123  'GRIFFIN'  STATUS: INFORMANT\n\nYou read it three times.\n\nGRIFFIN works for them. You sent an informant every word CASSANDRA wrote, including where the jammer was going. They knew you were coming tonight. The only reason you got out is that noise.bin went live before they could trace you.\n\nAnd CASSANDRA... STATUS: LOCATED."
+    },
+    {
+      "type": "text",
+      "requires": {"lied_to_griffin": true},
+      "speaker": "WATCHLIST.DAT",
+      "text": "0005  555-0123  'GRIFFIN'  STATUS: INFORMANT\n\nYou let out a breath you didn't know you were holding.\n\nCASSANDRA was right. If you'd sent GRIFFIN that message, Omnidyne would have been waiting at the exchange tonight.\n\nBut one line on the list still makes your stomach drop. CASSANDRA... STATUS: LOCATED."
+    },
+    {
+      "type": "text",
+      "speaker": "SYSTEM",
+      "text": "noise.bin is running on the Hollow Creek switch. Every fingerprint it captures from now on is static. Phase 2 is blind, for now.\n\nAt 3:02 AM your phone rings. Your voice line, not the modem.\n\nYou pick it up. Nobody speaks. Then a modem carrier tone screams down the line, and a single line of text crawls across your screen:\n\n  > THEY HAVE ME. OMNIDYNE TOWER. SUB-LEVEL 3. - C"
+    },
+    {
+      "type": "text",
+      "text": "END OF CHAPTER 2\n\nCASSANDRA is inside Omnidyne Tower. Chapter 3 is coming.\n\nThe Job Board is still open. Upgrade your rig, because the next system you face won't be a school or a phone exchange."
+    }
+  ]
+}

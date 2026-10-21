@@ -1,0 +1,2324 @@
+<title>NETRUNNER '86</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono&family=Source+Code+Pro&family=Fira+Code&family=Ubuntu+Mono&family=Press+Start+2P&family=Cascadia+Mono&display=swap">
+<style>
+/* Layout: one full-height CRT screen; scrolling log above, prompt row pinned below.
+   Single deliberate dark look (a phosphor monitor), so no light theme. */
+:root {
+  --bezel: #0b0f0a;
+  --screen: #031006;
+  --phosphor: #33ff66;
+  --phosphor-hi: #b8ffc9;
+  --phosphor-dim: #1c8c3a;
+  --alert: #ff4d4d;
+  --info: #5fe6ff;
+  --glow: rgba(51, 255, 102, .45);
+  --font-term: "VT323", "Courier New", ui-monospace, monospace;
+  --fs: clamp(17px, 2.4vw, 21px);
+  --scan: .28;
+  color-scheme: dark;
+}
+/* Terminal themes: each one only swaps tokens. Picked from the main menu. */
+:root[data-skin="amber"] {
+  --screen: #120a02; --phosphor: #ffb000; --phosphor-hi: #ffe2a3; --phosphor-dim: #9c6a00;
+  --glow: rgba(255, 176, 0, .45);
+}
+:root[data-skin="ibm"] { /* IBM PC with a 5151 mono monitor, DOS greys */
+  --bezel: #26241f; --screen: #050505; --phosphor: #b4b4b4; --phosphor-hi: #ffffff; --phosphor-dim: #5e5e5e;
+  --alert: #ff5555; --info: #55ffff; --glow: rgba(255, 255, 255, .22);
+  --font-term: "IBM Plex Mono", "Courier New", ui-monospace, monospace; --fs: clamp(13px, 1.7vw, 15.5px); --scan: .2;
+}
+:root[data-skin="linux"] { /* bare Linux console: grey text, green bash prompt */
+  --bezel: #101010; --screen: #000000; --phosphor: #c6c6c6; --phosphor-hi: #5fd75f; --phosphor-dim: #6e6e6e;
+  --alert: #ff5f5f; --info: #5fafff; --glow: transparent;
+  --font-term: "Source Code Pro", "DejaVu Sans Mono", ui-monospace, monospace; --fs: clamp(13px, 1.7vw, 15.5px); --scan: .06;
+}
+:root[data-skin="parrot"] { /* ParrotOS: deep navy with cyan accents */
+  --bezel: #070d15; --screen: #0c1622; --phosphor: #cfe6ea; --phosphor-hi: #2ee6d6; --phosphor-dim: #4d6878;
+  --alert: #ff4d6a; --info: #7aa2ff; --glow: rgba(46, 230, 214, .22);
+  --font-term: "Fira Code", ui-monospace, monospace; --fs: clamp(13px, 1.7vw, 15.5px); --scan: .04;
+}
+:root[data-skin="ubuntu"] { /* Ubuntu terminal: aubergine, green user@host */
+  --bezel: #1c0616; --screen: #300a24; --phosphor: #eeeeec; --phosphor-hi: #8ae234; --phosphor-dim: #a48b9c;
+  --alert: #ef2929; --info: #729fcf; --glow: transparent;
+  --font-term: "Ubuntu Mono", ui-monospace, monospace; --fs: clamp(14px, 1.9vw, 17px); --scan: 0;
+}
+:root[data-skin="zx"] { /* ZX Spectrum 48K: black ink on white paper, bright blue and red */
+  --bezel: #141414; --screen: #d7d7d7; --phosphor: #000000; --phosphor-hi: #0000d7; --phosphor-dim: #5c5c5c;
+  --alert: #d70000; --info: #b000b0; --glow: transparent;
+  --font-term: "Press Start 2P", ui-monospace, monospace; --fs: clamp(9px, 1.05vw, 11.5px); --lh: 1.75; --scan: .07;
+}
+:root[data-skin="cmd"] { /* Windows Command Prompt */
+  --bezel: #000000; --screen: #0c0c0c; --phosphor: #cccccc; --phosphor-hi: #f2f2f2; --phosphor-dim: #767676;
+  --alert: #e74856; --info: #3a96dd; --glow: transparent;
+  --font-term: "Cascadia Mono", Consolas, "Lucida Console", ui-monospace, monospace; --fs: clamp(13px, 1.6vw, 15px); --scan: 0;
+}
+:root[data-skin="powershell"] { /* Windows PowerShell: navy with yellow input */
+  --bezel: #00152e; --screen: #012456; --phosphor: #eeedf0; --phosphor-hi: #f9f1a5; --phosphor-dim: #8fa1c7;
+  --alert: #ff6b6b; --info: #61d6d6; --glow: transparent;
+  --font-term: "Cascadia Mono", Consolas, ui-monospace, monospace; --fs: clamp(13px, 1.6vw, 15px); --scan: 0;
+}
+
+/* ===== Desktop mode: a themed desktop with the game running in a window.
+   data-frame="desktop" turns it on (Themes menu W); data-chrome picks the
+   window and taskbar style for the current theme (set from SKINS). ===== */
+.window { height: 100%; max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; position: relative; z-index: 1; }
+:root { --task-h: 38px; }
+.titlebar, .desktop, .note { display: none; }
+:root[data-frame="desktop"] .desktop { display: block; }
+:root[data-frame="desktop"] .titlebar { display: flex; }
+:root[data-frame="desktop"] body {
+  padding: 26px 34px calc(var(--task-h) + 22px) 128px;
+  background: var(--desk-bg, #000);
+  background-size: cover;
+}
+:root[data-frame="desktop"] .window {
+  border: 1px solid var(--win-edge, #000);
+  border-radius: var(--win-radius, 0);
+  box-shadow: 0 18px 50px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.5);
+  overflow: hidden;
+  background: var(--screen);
+}
+:root[data-frame="desktop"] .crt { border-radius: 0 !important; box-shadow: inset 0 0 40px rgba(0,0,0,.5); max-width: none; animation: none; }
+:root[data-frame="desktop"]:not([data-chrome="retro"]):not([data-chrome="zx"]):not([data-chrome="gem"]) .fx-glass,
+:root[data-frame="desktop"]:not([data-chrome="retro"]):not([data-chrome="zx"]):not([data-chrome="gem"]) .fx-band { display: none; }
+:root[data-frame="desktop"]:not([data-chrome="retro"]):not([data-chrome="zx"]):not([data-chrome="gem"]) .crt { box-shadow: none; background: var(--screen); }
+.titlebar {
+  align-items: center; gap: 8px; flex: none;
+  height: 30px; padding: 0 6px 0 10px;
+  background: var(--title-bg, #222); color: var(--title-fg, #ddd);
+  font: var(--title-font, 600 13px/1 system-ui, sans-serif); letter-spacing: 0;
+  user-select: none; text-shadow: none;
+}
+.wtitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wbtns { display: flex; gap: 4px; }
+.wbtns span { width: 22px; height: 18px; display: grid; place-items: center; font: 600 12px/1 system-ui, sans-serif; }
+.desktop { position: fixed; inset: 0; z-index: 0; font-family: system-ui, sans-serif; letter-spacing: 0; overflow: hidden; }
+.desktop::before { content: ""; position: absolute; inset: 0; background: var(--desk-art, none); pointer-events: none; }
+.icons { position: absolute; top: 22px; left: 14px; display: flex; flex-direction: column; gap: 14px; width: 92px; }
+.icon {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: none; border: 1px solid transparent; color: var(--icon-fg, #fff); cursor: pointer;
+  font: 12px/1.2 system-ui, sans-serif; padding: 6px 2px; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+}
+.icon svg { width: 40px; height: 40px; }
+.icon:hover, .icon:focus-visible { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); outline: none; }
+.taskbar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--task-h, 38px);
+  display: flex; align-items: center; gap: 8px; padding: 0 8px;
+  background: var(--task-bg, #111); color: var(--task-fg, #eee);
+  font: 13px/1 system-ui, sans-serif; box-shadow: 0 -1px 0 rgba(255,255,255,.12);
+}
+.taskbar button, .taskbar .task {
+  font: inherit; color: inherit; background: var(--task-btn, rgba(255,255,255,.08)); border: 0;
+  height: calc(100% - 10px); padding: 0 12px; display: inline-flex; align-items: center; border-radius: var(--task-radius, 2px);
+}
+.taskbar .start { font-weight: 700; cursor: pointer; }
+.taskbar .task { box-shadow: inset 0 -2px 0 var(--task-accent, currentColor); max-width: 220px; overflow: hidden; white-space: nowrap; }
+.taskbar .clock { margin-left: auto; padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.note {
+  position: fixed; z-index: 2; right: 40px; top: 40px; width: min(340px, calc(100vw - 32px));
+  background: #fffbe0; color: #222; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  font: 14px/1.5 system-ui, sans-serif; letter-spacing: 0;
+}
+:root[data-frame="desktop"] .note:not([hidden]) { display: block; }
+.note .titlebar { display: flex; --title-bg: #e8e2b8; --title-fg: #222; }
+.note .wbtns button { all: unset; cursor: pointer; width: 22px; height: 18px; display: grid; place-items: center; font: 700 13px/1 system-ui, sans-serif; }
+.note pre { margin: 0; padding: 12px 14px; white-space: pre-wrap; font: 13px/1.5 ui-monospace, monospace; }
+
+/* --- chrome: retro (green, amber): synthwave grid, phosphor window --- */
+:root[data-chrome="retro"] {
+  --desk-bg: linear-gradient(to bottom, #04010c 0%, #12052a 45%, color-mix(in srgb, var(--phosphor) 22%, #1a0430) 62%, #05010c 62.2%, #05010c 100%);
+  --desk-art: radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--phosphor-hi) 80%, transparent) 0 110px, color-mix(in srgb, var(--phosphor) 25%, transparent) 111px, transparent 190px) 0 0 / 100% 62% no-repeat;
+  --win-edge: var(--phosphor-dim); --title-bg: #000; --title-fg: var(--phosphor);
+  --title-font: 400 calc(var(--fs) * .95)/1 var(--font-term); --icon-fg: var(--phosphor-hi);
+  --task-bg: rgba(0,0,0,.85); --task-fg: var(--phosphor); --task-btn: transparent; --task-accent: var(--phosphor);
+}
+:root[data-chrome="retro"] .titlebar { border-bottom: 1px solid var(--phosphor-dim); }
+:root[data-chrome="retro"] .titlebar, :root[data-chrome="retro"] .taskbar { font-family: var(--font-term); font-size: calc(var(--fs) * .95); }
+:root[data-chrome="retro"] .wbtns span { border: 1px solid var(--phosphor-dim); font: inherit; }
+:root[data-chrome="retro"] .taskbar button, :root[data-chrome="retro"] .taskbar .task { border: 1px solid var(--phosphor-dim); }
+:root[data-chrome="retro"] .icon { font-family: var(--font-term); font-size: 15px; text-shadow: 0 0 6px var(--glow); }
+.grid { display: none; }
+:root[data-chrome="retro"] .grid {
+  display: block; position: absolute; left: -60%; right: -60%; top: 62%; height: 70%;
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--phosphor) 55%, transparent) 0 2px, transparent 2px 70px),
+    repeating-linear-gradient(to bottom, color-mix(in srgb, var(--phosphor) 55%, transparent) 0 2px, transparent 2px 50px);
+  transform: perspective(240px) rotateX(58deg); transform-origin: 50% 0;
+  animation: grid-run 2.4s linear infinite;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%); mask-image: linear-gradient(to bottom, transparent, #000 25%);
+}
+@keyframes grid-run { to { background-position: 0 0, 0 50px; } }
+@media (prefers-reduced-motion: reduce) { .grid { animation: none !important; } }
+/* --- chrome: gem (IBM PC): dithered grey desktop, striped title --- */
+:root[data-chrome="gem"] {
+  --desk-bg: repeating-conic-gradient(#9c9c9c 0 25%, #b8b8b8 0 50%) 0 0 / 4px 4px;
+  --win-edge: #000; --title-bg: repeating-linear-gradient(to bottom, #fff 0 2px, #000 2px 3px); --title-fg: #000;
+  --title-font: 700 13px/1 "IBM Plex Mono", monospace; --icon-fg: #000;
+  --task-bg: #fff; --task-fg: #000; --task-btn: #fff; --task-accent: #000;
+}
+:root[data-chrome="gem"] .wtitle { flex: none; margin-inline: auto; background: #fff; padding: 2px 8px; }
+:root[data-chrome="gem"] .wbtns span { background: #fff; border: 1px solid #000; }
+:root[data-chrome="gem"] .taskbar { border-top: 2px solid #000; font-family: "IBM Plex Mono", monospace; }
+:root[data-chrome="gem"] .taskbar button, :root[data-chrome="gem"] .taskbar .task { border: 1px solid #000; }
+:root[data-chrome="gem"] .icon { text-shadow: none; font-family: "IBM Plex Mono", monospace; }
+:root[data-chrome="gem"] .icon span { background: #fff; padding: 0 3px; }
+/* --- chrome: zx (ZX Spectrum): black desk, the rainbow stripes --- */
+:root[data-chrome="zx"] {
+  --desk-bg: #000;
+  --desk-art: linear-gradient(135deg, transparent 0 calc(100% - 290px), #d70000 calc(100% - 290px) calc(100% - 250px), #d7d700 calc(100% - 250px) calc(100% - 210px), #00d700 calc(100% - 210px) calc(100% - 170px), #00d7d7 calc(100% - 170px) calc(100% - 130px), transparent calc(100% - 130px));
+  --win-edge: #d7d7d7; --title-bg: #000; --title-fg: #fff; --title-font: 400 10px/1 "Press Start 2P", monospace;
+  --icon-fg: #fff; --task-bg: #000; --task-fg: #fff; --task-btn: #000; --task-accent: #00d7d7;
+}
+:root[data-chrome="zx"] .titlebar::after { content: ""; width: 74px; height: 100%; background: linear-gradient(115deg, transparent 0 20%, #d70000 20% 37%, #d7d700 37% 54%, #00d700 54% 71%, #00d7d7 71% 88%, transparent 88%); }
+:root[data-chrome="zx"] .wbtns { display: none; }
+:root[data-chrome="zx"] .taskbar, :root[data-chrome="zx"] .icon { font: 9px/1.3 "Press Start 2P", monospace; }
+:root[data-chrome="zx"] .taskbar { border-top: 2px solid #d7d7d7; }
+/* --- chrome: plain (Linux TTY): dark grey desktop --- */
+:root[data-chrome="plain"] {
+  --desk-bg: radial-gradient(ellipse at 30% 20%, #3a3a3a, #1b1b1b 70%);
+  --win-edge: #555; --title-bg: #2d2d2d; --title-fg: #ccc; --win-radius: 6px 6px 0 0;
+  --task-bg: #111; --task-fg: #ccc; --task-accent: #5fd75f;
+}
+/* --- chrome: parrot: navy desktop with a cyan glow --- */
+:root[data-chrome="parrot"] {
+  --desk-bg: radial-gradient(ellipse 60% 50% at 70% 60%, rgba(46,230,214,.22), transparent 70%), radial-gradient(ellipse at 20% 10%, #13263a, #050a12 75%);
+  --desk-art: repeating-radial-gradient(circle at 70% 60%, transparent 0 38px, rgba(46,230,214,.07) 38px 39px);
+  --win-edge: #1f3a4f; --title-bg: #0a121c; --title-fg: #2ee6d6; --win-radius: 6px 6px 0 0;
+  --task-bg: #08111b; --task-fg: #cfe6ea; --task-accent: #2ee6d6;
+}
+/* --- chrome: gnome (Ubuntu): orange and aubergine, top bar, round buttons --- */
+:root[data-chrome="gnome"] {
+  --desk-bg: radial-gradient(ellipse 80% 70% at 75% 85%, #e95420 0%, #a63a52 35%, #5e1c4d 60%, #2c001e 100%);
+  --desk-art: radial-gradient(ellipse 50% 40% at 15% 15%, rgba(255,255,255,.06), transparent 70%);
+  --win-edge: #1a1a1a; --title-bg: #303030; --title-fg: #f2f2f2; --win-radius: 12px 12px 0 0;
+  --task-bg: #000; --task-fg: #fff; --task-btn: transparent; --task-accent: #e95420; --task-h: 28px; --task-radius: 14px;
+}
+:root[data-chrome="gnome"] body { padding: calc(var(--task-h) + 22px) 34px 24px 128px; }
+:root[data-chrome="gnome"] .taskbar { top: 0; bottom: auto; box-shadow: none; }
+:root[data-chrome="gnome"] .taskbar .clock { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; font-weight: 600; }
+:root[data-chrome="gnome"] .icons { top: calc(var(--task-h) + 22px); }
+:root[data-chrome="gnome"] .wtitle { text-align: center; }
+:root[data-chrome="gnome"] .wbtns span { width: 18px; height: 18px; border-radius: 50%; background: #4a4a4a; font-size: 10px; }
+:root[data-chrome="gnome"] .wbtns span:last-child { background: #e95420; }
+/* --- chrome: win95 (cmd): teal desktop, grey bevels, navy title --- */
+:root[data-chrome="win95"] {
+  --desk-bg: #008080; --win-edge: #000; --title-bg: linear-gradient(90deg, #000080, #1084d0); --title-fg: #fff;
+  --title-font: 700 12px/1 Tahoma, "Segoe UI", system-ui, sans-serif;
+  --task-bg: #c0c0c0; --task-fg: #000; --task-btn: #c0c0c0; --task-accent: transparent; --task-radius: 0;
+}
+:root[data-chrome="win95"] .window { padding: 3px; background: #c0c0c0; box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff, 0 10px 30px rgba(0,0,0,.4); }
+:root[data-chrome="win95"] .titlebar { height: 22px; margin-bottom: 2px; }
+:root[data-chrome="win95"] .wbtns span, :root[data-chrome="win95"] .taskbar button, :root[data-chrome="win95"] .taskbar .task {
+  background: #c0c0c0; color: #000; box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+}
+:root[data-chrome="win95"] .wbtns span { width: 16px; height: 14px; font-size: 10px; }
+:root[data-chrome="win95"] .wbtns { gap: 2px; }
+:root[data-chrome="win95"] .taskbar { box-shadow: inset 0 1px #dfdfdf, inset 0 2px #fff; font-family: Tahoma, "Segoe UI", system-ui, sans-serif; font-size: 12px; }
+:root[data-chrome="win95"] .taskbar .task { box-shadow: inset 1px 1px #000, inset -1px -1px #fff, inset 2px 2px #808080; background: repeating-conic-gradient(#c0c0c0 0 25%, #fff 0 50%) 0 0 / 2px 2px; font-weight: 700; }
+:root[data-chrome="win95"] .taskbar .clock { box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; height: calc(100% - 10px); display: inline-flex; align-items: center; }
+:root[data-chrome="win95"] .crt { box-shadow: inset 1px 1px #808080, inset -1px -1px #fff !important; }
+/* --- chrome: win10 (PowerShell): blue light-beam wallpaper, flat white title --- */
+:root[data-chrome="win10"] {
+  --desk-bg: radial-gradient(ellipse 40% 60% at 62% 45%, rgba(110,180,255,.55), transparent 70%), linear-gradient(115deg, #001a3d 0%, #00327a 45%, #0a5bc4 60%, #001a3d 100%);
+  --desk-art: conic-gradient(from 200deg at 62% 45%, transparent 0deg, rgba(255,255,255,.10) 12deg, transparent 24deg, transparent 60deg, rgba(255,255,255,.07) 72deg, transparent 84deg);
+  --win-edge: #1f6fd1; --title-bg: #fff; --title-fg: #000; --title-font: 400 12px/1 "Segoe UI", system-ui, sans-serif;
+  --task-bg: rgba(16, 24, 32, .92); --task-fg: #fff; --task-btn: transparent; --task-accent: #4ca3ff; --task-radius: 0; --task-h: 40px;
+}
+:root[data-chrome="win10"] .wbtns { gap: 0; margin-right: -6px; }
+:root[data-chrome="win10"] .wbtns span { width: 40px; height: 30px; font-weight: 400; }
+:root[data-chrome="win10"] .wbtns span:last-child:hover { background: #e81123; color: #fff; }
+
+@media (max-width: 700px) {
+  :root[data-frame="desktop"] body { padding: 10px 8px calc(var(--task-h) + 10px); }
+  :root[data-chrome="gnome"] body { padding: calc(var(--task-h) + 10px) 8px 10px; }
+  .icons { display: none; }
+  .taskbar .task { display: none !important; }
+  :root[data-frame="desktop"] .window { box-shadow: 0 6px 20px rgba(0,0,0,.6); }
+}
+/* News feed window: floats over everything, drag by its title bar, resize from the corner. */
+.rss {
+  position: fixed; z-index: 7; left: 60%; top: 70px; width: 380px; height: 440px;
+  min-width: 260px; min-height: 200px; max-width: calc(100vw - 8px); max-height: calc(100vh - 8px);
+  display: flex; flex-direction: column; resize: both; overflow: hidden;
+  background: var(--screen); color: var(--phosphor);
+  border: 1px solid var(--win-edge, var(--phosphor-dim)); border-radius: var(--win-radius, 0);
+  box-shadow: 0 16px 44px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.4);
+  font-family: var(--font-term); font-size: calc(var(--fs) * .9); line-height: 1.35;
+}
+.rss[hidden] { display: none; }
+.rss .titlebar { display: flex; cursor: move; touch-action: none; }
+.rss.dragging { opacity: .92; }
+.rss .wbtns button { all: unset; cursor: pointer; width: 22px; height: 18px; display: grid; place-items: center; font: 700 13px/1 system-ui, sans-serif; }
+.rss-tools { display: flex; gap: 6px; padding: 8px 10px 4px; }
+.rss select, .rss button.cmdbtn, .rss input {
+  font: inherit; color: var(--phosphor); background: var(--screen);
+  border: 1px solid var(--phosphor-dim); padding: 3px 6px; min-width: 0;
+}
+.rss select { flex: 1; }
+.rss button.cmdbtn { cursor: pointer; }
+.rss button.cmdbtn:hover, .rss button.cmdbtn:focus-visible { background: var(--phosphor); color: var(--screen); outline: none; }
+.rss-status { padding: 2px 10px 6px; font-size: .9em; border-bottom: 1px solid color-mix(in srgb, var(--phosphor-dim) 50%, transparent); }
+.rss-list { list-style: none; margin: 0; padding: 6px 10px; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scrollbar-color: var(--phosphor-dim) transparent; }
+.rss-list a { color: var(--phosphor-hi); text-decoration: none; }
+.rss-list a:hover, .rss-list a:focus-visible { text-decoration: underline; }
+.rss-list .dim { font-size: .85em; margin-top: 2px; }
+.rss-add { display: flex; gap: 6px; padding: 6px 10px 10px; border-top: 1px solid color-mix(in srgb, var(--phosphor-dim) 50%, transparent); }
+.rss-add input { flex: 1; }
+html, body { height: 100%; }
+body {
+  background: var(--bezel);
+  color: var(--phosphor);
+  font-family: var(--font-term);
+  font-size: var(--fs);
+  line-height: var(--lh, 1.4);
+  letter-spacing: .02em;
+  padding-inline: 16px;
+  padding-block: 12px;
+  box-sizing: border-box;
+}
+.crt {
+  position: relative;
+  flex: 1; min-height: 0; width: 100%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--screen) 80%, var(--phosphor) 6%) 0%, var(--screen) 70%);
+  border-radius: 18px;
+  box-shadow: inset 0 0 60px rgba(0,0,0,.85), 0 0 0 2px #1a2218, 0 0 0 10px #0f140e, 0 0 40px rgba(0,0,0,.6);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 28%, 340px);
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-areas: "out panel" "prompt panel" "chips panel";
+  overflow: hidden;
+}
+#out { grid-area: out; }
+.prompt-row { grid-area: prompt; }
+.chips { grid-area: chips; }
+#panel {
+  grid-area: panel;
+  min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  border-left: 1px solid color-mix(in srgb, var(--phosphor-dim) 50%, transparent);
+  text-shadow: 0 0 6px var(--glow);
+}
+.tabbar { display: flex; align-items: center; gap: 6px; padding: 12px 12px 8px; flex-wrap: wrap; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.tabbar button {
+  font: inherit; font-size: .85em; letter-spacing: .06em;
+  color: var(--phosphor-dim); background: transparent;
+  border: 1px solid var(--phosphor-dim);
+  padding: 2px 8px; cursor: pointer; white-space: nowrap; line-height: 1.2;
+  text-shadow: inherit;
+}
+.tabbar [aria-selected="true"] { color: var(--screen); background: var(--phosphor); text-shadow: none; }
+.tabbar button.hot { color: var(--alert); border-color: var(--alert); }
+.tabbar [aria-selected="true"].hot { background: var(--alert); color: var(--screen); }
+.tabbar button:hover, .tabbar button:focus-visible { outline: 1px solid var(--phosphor-hi); outline-offset: 1px; }
+#panel-toggle { display: none; }
+.pane { flex: 1; min-height: 0; overflow: auto; padding: 4px 12px 12px; }
+#map { margin: 0; font: inherit; font-size: .9em; line-height: 1.3; white-space: pre; color: var(--phosphor); }
+#pane-trace { display: flex; flex-direction: column; gap: 8px; }
+#pane-trace[hidden] { display: none; }
+#radar { flex: 1; min-height: 140px; width: 100%; }
+.readout { font-size: .9em; color: var(--phosphor); }
+.readout.hot { color: var(--alert); }
+#notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: .9em; }
+#notes li { overflow-wrap: anywhere; }
+@media (max-width: 860px) {
+  .crt {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    grid-template-areas: "out" "panel" "prompt" "chips";
+  }
+  #panel { border-left: 0; border-top: 1px solid color-mix(in srgb, var(--phosphor-dim) 50%, transparent); height: 12.5em; }
+  #panel.collapsed { height: auto; }
+  #panel.collapsed .pane { display: none; }
+  #panel-toggle { display: inline-block; }
+  .tabbar { padding: 6px 12px 4px; }
+  #radar { min-height: 0; }
+}
+.crt::after { /* scanlines */
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,var(--scan)) 0 1px, transparent 1px 3px);
+  border-radius: inherit;
+}
+#out {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 20px 8px;
+  text-shadow: 0 0 6px var(--glow);
+  scrollbar-color: var(--phosphor-dim) transparent;
+}
+.ln { white-space: pre-wrap; overflow-wrap: anywhere; min-height: calc(var(--lh, 1.4) * 1em); }
+.fg { color: var(--phosphor); }
+.hi { color: var(--phosphor-hi); }
+.dim { color: var(--phosphor-dim); text-shadow: none; }
+.alert { color: var(--alert); text-shadow: 0 0 6px rgba(255,77,77,.5); }
+.info { color: var(--info); }
+pre.art { margin: 0; letter-spacing: 0; white-space: pre; line-height: 1.05; overflow: hidden; font-family: inherit; }
+.box {
+  border: 1px solid var(--phosphor-dim);
+  box-shadow: 0 0 8px var(--glow) inset;
+  padding: 14px 16px 10px;
+  margin-block: 14px 10px;
+  position: relative;
+}
+.box > .title {
+  position: absolute; top: -.7em; left: 10px;
+  background: var(--screen);
+  padding-inline: 6px;
+  color: var(--phosphor-hi);
+  letter-spacing: .08em;
+}
+.dump { display: grid; grid-template-columns: repeat(auto-fill, minmax(22ch, 1fr)); column-gap: 2ch; }
+.dump span { white-space: pre; }
+.prompt-row {
+  display: flex; align-items: baseline; gap: .5ch;
+  padding: 6px 20px 4px;
+  border-top: 1px solid color-mix(in srgb, var(--phosphor-dim) 50%, transparent);
+  text-shadow: 0 0 6px var(--glow);
+  flex-wrap: wrap;
+}
+#ps { white-space: pre-wrap; }
+#cmd {
+  flex: 1; min-width: 8ch;
+  background: transparent; border: 0; outline: 0;
+  color: var(--phosphor-hi); caret-color: var(--phosphor-hi);
+  font: inherit; text-shadow: inherit; padding: 0;
+}
+.chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 4px 20px 14px;
+  max-height: 6.4em;
+  overflow-y: auto;
+}
+.chips button {
+  font: inherit; font-size: .9em;
+  color: var(--phosphor); background: transparent;
+  border: 1px solid var(--phosphor-dim);
+  padding: 3px 10px; cursor: pointer; line-height: 1.2;
+  text-shadow: 0 0 6px var(--glow);
+}
+.chips button:hover, .chips button:focus-visible { background: var(--phosphor); color: var(--screen); outline: none; text-shadow: none; }
+.toggles { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.toggle-row { display: flex; gap: 4px; }
+.toggle-row #mute { flex: 1; }
+#next-track { color: var(--phosphor); }
+#mute, #chips-toggle { color: var(--phosphor); }
+#chips-toggle[aria-pressed="false"] { color: var(--phosphor-dim); }
+.chips.off { display: none; }
+#mute[aria-pressed="false"] { color: var(--phosphor-dim); }
+.cursor { display: inline-block; width: .6em; background: var(--phosphor); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes flicker { 0%,100% { opacity: 1 } 50% { opacity: .97 } }
+.crt { animation: flicker 4s infinite; }
+
+/* CRT effects. The curved glass, rolling band and phosphor afterglow switch
+   off together with data-crt="off" (Themes menu). Power on/off and glitches
+   always play, except with reduced motion. */
+.fx { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; overflow: hidden; z-index: 3; }
+.fx-glass { /* curved tube: dark corners, a soft bulge of light, and a glare on the glass */
+  background:
+    radial-gradient(ellipse 120% 95% at 50% 50%, transparent 58%, rgba(0,0,0,.38) 82%, rgba(0,0,0,.8) 100%),
+    radial-gradient(ellipse 70% 55% at 50% 45%, color-mix(in srgb, var(--phosphor) 5%, transparent), transparent 70%),
+    linear-gradient(165deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.015) 22%, transparent 38%);
+  box-shadow: inset 0 0 90px 12px rgba(0,0,0,.55), inset 0 0 6px 2px rgba(0,0,0,.6);
+}
+.fx-band::before { /* the slow bright band rolling down the screen */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 18%;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--phosphor) 7%, transparent) 45%, color-mix(in srgb, var(--phosphor-hi) 9%, transparent) 55%, transparent);
+  animation: roll 8s linear infinite;
+}
+@keyframes roll { from { transform: translateY(-100%); } to { transform: translateY(560%); } }
+:root:not([data-crt="off"]) .crt { border-radius: 34px / 44px; }
+:root[data-crt="off"] .fx-glass, :root[data-crt="off"] .fx-band { display: none; }
+:root[data-crt="off"] .crt { animation: none; }
+.ghost { /* afterglow: the last screen fading off the phosphor */
+  grid-area: out; z-index: 1; pointer-events: none; overflow: hidden;
+  padding: 18px 20px 8px; filter: blur(.6px);
+  animation: afterglow .7s ease-out forwards;
+}
+.ghost > div { will-change: transform; }
+.ghost * { color: var(--phosphor) !important; }
+@keyframes afterglow { from { opacity: .45; } to { opacity: 0; } }
+/* Power on: a dot stretches into a line, then the line opens into the picture.
+   Power off is the same in reverse. The black frame around the opening is a
+   huge box-shadow, clipped to the screen by .crt's overflow. */
+.power {
+  position: absolute; left: 50%; top: 50%; width: 100%; height: 100%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 200vmax #000; z-index: 6; pointer-events: none; display: none;
+}
+.power.on { display: block; animation: power-on .9s ease-out forwards; }
+.power.off { display: block; animation: power-off .75s ease-in forwards; }
+.power.dark { display: block; width: 0; height: 0; }
+@keyframes power-on {
+  0%   { width: 0;    height: 2px; background: #fff; box-shadow: 0 0 0 200vmax #000, 0 0 30px 6px #fff; }
+  28%  { width: 100%; height: 2px; background: #fff; }
+  55%  { width: 100%; height: 100%; background: color-mix(in srgb, var(--phosphor-hi) 55%, transparent); }
+  100% { width: 100%; height: 100%; background: transparent; }
+}
+@keyframes power-off {
+  0%   { width: 100%; height: 100%; background: transparent; }
+  20%  { width: 100%; height: 100%; background: rgba(255,255,255,.55); }
+  55%  { width: 100%; height: 2px;  background: #fff; }
+  85%  { width: 6px;  height: 2px;  background: #fff; box-shadow: 0 0 0 200vmax #000, 0 0 18px 4px #fff; }
+  100% { width: 0;    height: 0;    background: #fff; }
+}
+/* Glitch: RGB split, the picture jumps, a burst of static. */
+.crt.glitch #out, .crt.glitch .prompt-row, .crt.glitch #panel {
+  animation: glitch-jump .16s steps(1) infinite;
+  text-shadow: 2px 0 rgba(255, 30, 80, .75), -2px 0 rgba(0, 220, 255, .75);
+}
+.crt.glitch.hard #out { animation-duration: .09s; text-shadow: 4px 0 rgba(255, 30, 80, .8), -4px 0 rgba(0, 220, 255, .8); }
+@keyframes glitch-jump {
+  0%   { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+  25%  { transform: translate(-4px, 1px) skewX(-2deg); clip-path: inset(8% 0 52% 0); }
+  50%  { transform: translate(3px, -1px); clip-path: inset(0 0 0 0); }
+  75%  { transform: translate(-2px, 0) skewX(3deg); clip-path: inset(40% 0 18% 0); }
+}
+#static { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; opacity: 0; image-rendering: pixelated; mix-blend-mode: screen; border-radius: inherit; }
+.crt.glitch #static { opacity: .16; }
+.crt.glitch.hard #static { opacity: .24; }
+/* Cutscenes */
+.cutscene { width: fit-content; max-width: 100%; margin-inline: auto; }
+.skip-hint { position: absolute; right: 22px; bottom: 8px; z-index: 5; font-size: .8em; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .crt, .cursor, .fx-band::before, .ghost { animation: none; }
+  .ghost { display: none; }
+  .power.on, .power.off { display: none; }
+  .crt.glitch #out, .crt.glitch .prompt-row, .crt.glitch #panel { animation: none; }
+}
+@media (max-width: 520px) {
+  body { padding-inline: 16px; padding-block: 8px; }
+  .crt { border-radius: 10px; }
+  :root:not([data-crt="off"]) .crt { border-radius: 22px / 28px; }
+  .fx-glass { box-shadow: inset 0 0 50px 8px rgba(0,0,0,.55), inset 0 0 6px 2px rgba(0,0,0,.6); }
+  #out, .ghost { padding: 12px 12px 6px; }
+  .prompt-row { padding-inline: 12px; }
+  .chips { padding-inline: 12px; }
+}
+</style>
+
+<div class="desktop" id="desktop">
+  <div class="grid" aria-hidden="true"></div>
+  <div class="icons">
+    <button type="button" class="icon" data-act="focus" title="Back to the game">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="26" rx="2" fill="#111" stroke="currentColor" stroke-width="2"/><path d="M9 13l5 4-5 4M17 22h8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="32" width="12" height="4" fill="currentColor"/></svg>
+      <span>NETRUN.EXE</span></button>
+    <button type="button" class="icon" data-act="music" title="Play the next track">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="9" width="34" height="22" rx="2" fill="#222" stroke="currentColor" stroke-width="2"/><circle cx="13" cy="19" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="27" cy="19" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 31l3-5h14l3 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      <span>MIXTAPE</span></button>
+    <button type="button" class="icon" data-act="readme" title="How to play">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 3h16l7 7v27H9z" fill="#f4f4f4" stroke="#333" stroke-width="2"/><path d="M25 3v7h7M13 17h14M13 22h14M13 27h10" fill="none" stroke="#333" stroke-width="2"/></svg>
+      <span>README.TXT</span></button>
+    <button type="button" class="icon" data-act="rss" title="Open the news feed">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="4" width="32" height="32" rx="5" fill="#f28a1a" stroke="#222" stroke-width="2"/><circle cx="13" cy="27" r="3" fill="#fff"/><path d="M11 18a11 11 0 0 1 11 11M11 10a19 19 0 0 1 19 19" fill="none" stroke="#fff" stroke-width="3.5"/></svg>
+      <span>NEWSFEED</span></button>
+  </div>
+  <div class="taskbar"><button type="button" class="start" id="start-btn">Start</button><span class="task" id="task">NETRUNNER '86</span><span class="clock" id="clock"></span></div>
+</div>
+<div class="note" id="readme" hidden>
+  <div class="titlebar"><span class="wtitle">README.TXT - Notepad</span><span class="wbtns"><button type="button" id="readme-close" aria-label="Close">x</button></span></div>
+  <pre>NETRUNNER '86 - HOW TO PLAY
+
+scan          find hosts on the network
+connect &lt;ip&gt;  dial into a host
+crack         beat its lock minigame
+ls / cat      look around, read files
+get / put/ rm do what the job asks
+dc            hang up and get paid
+
+Every command while connected raises
+TRACE. Hit 100% and you're caught.
+
+TAB completes commands. Tap the buttons
+under the prompt on phones.</pre>
+</div>
+<section class="rss" id="rss" hidden aria-label="News feed">
+  <div class="titlebar" id="rss-bar"><span class="wtitle">NEWSFEED.EXE</span><span class="wbtns"><button type="button" id="rss-close" aria-label="Close news feed">x</button></span></div>
+  <div class="rss-tools"><select id="rss-pick" aria-label="Pick a feed"></select><button type="button" class="cmdbtn" id="rss-refresh">REFRESH</button></div>
+  <div class="rss-status" id="rss-status" aria-live="polite"></div>
+  <ol class="rss-list" id="rss-list"></ol>
+  <form class="rss-add" id="rss-add"><input id="rss-url" type="url" placeholder="add a feed: https://..." aria-label="Feed URL" autocomplete="off"><button type="submit" class="cmdbtn">ADD</button></form>
+</section>
+<div class="window" id="window">
+<div class="titlebar"><span class="wtitle" id="wtitle">NETRUN.EXE</span><span class="wbtns" aria-hidden="true"><span>_</span><span>&#9633;</span><span>x</span></span></div>
+<div class="crt" id="crt">
+  <div id="out" aria-live="polite"></div>
+  <aside id="panel" aria-label="Side panel">
+    <div class="tabbar">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="map">MAP</button>
+        <button type="button" role="tab" data-tab="trace">TRACE</button>
+        <button type="button" role="tab" data-tab="notes">NOTES</button>
+      </div>
+      <button type="button" id="panel-toggle" title="Hide or show the side panel">HIDE</button>
+      <div class="toggles">
+        <div class="toggle-row">
+          <button type="button" id="mute" aria-pressed="true" title="Turn the music on or off">MUSIC: ON</button>
+          <button type="button" id="next-track" title="Next track" aria-label="Next track">&gt;&gt;</button>
+        </div>
+        <button type="button" id="chips-toggle" aria-pressed="true" title="Show or hide the tappable command buttons">BUTTONS: ON</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-map"><pre id="map"></pre></div>
+    <div class="pane" id="pane-trace" hidden><canvas id="radar" aria-label="Trace radar"></canvas><div class="readout" id="readout"></div></div>
+    <div class="pane" id="pane-notes" hidden><ul id="notes"></ul></div>
+  </aside>
+  <div class="prompt-row"><span id="ps"></span><input id="cmd" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Command"></div>
+  <div class="chips" id="chips"></div>
+  <canvas id="static" width="160" height="100" aria-hidden="true"></canvas>
+  <div class="fx fx-band" aria-hidden="true"></div>
+  <div class="fx fx-glass" aria-hidden="true"></div>
+  <div class="power" id="power" aria-hidden="true"></div>
+</div>
+</div>
+
+<script>
+"use strict";
+const DATA = {"art": {"TITLE": "\n _   _ _____ _____ ____  _   _ _   _ _   _ _____ ____     /\\ ___\n| \\ | | ____|_   _|  _ \\| | | | \\ | | \\ | | ____|  _ \\   |/ ( _ ) / /_\n|  \\| |  _|   | | | |_) | | | |  \\| |  \\| |  _| | |_) |     / _ \\| '_ \\\n| |\\  | |___  | | |  _ <| |_| | |\\  | |\\  | |___|  _ <     | (_) | (_) |\n|_| \\_|_____| |_| |_| \\_\\\\___/|_| \\_|_| \\_|_____|_| \\_\\     \\___/ \\___/\n", "TERMINAL": "\n     .----------------------------------.\n     |  .----------------------------.  |\n     |  | C:\\> DIAL 555-0199_        |  |\n     |  |                            |  |\n     |  |  CONNECT 2400              |  |\n     |  |                            |  |\n     |  '----------------------------'  |\n     |   [==]  ACME PC/XT     o  o  o   |\n     '----------------------------------'\n        _[_______________________]_\n       /___________________________\\\n", "SKULL": "\n        _____\n      /       \\\n     | () ( ) |\n      \\   ^   /\n       |||||||\n       '''''''\n   *** TRACE COMPLETE ***\n", "LOCK": "\n      .--------.\n     / .------. \\\n    / /        \\ \\\n    | |        | |\n   _| |________| |_\n .' |_|        |_| '.\n '._____ ____ _____.'\n |     .'____'.     |\n '.__.'.'    '.'.__.'\n '.__  | ACCESS |  __.'\n |   '.'.____.'.'   |\n '.____'.____.'____.'\n", "BOARD": "\n   ___  ___  ___    ___ _   _ _    _    ___ _____ ___ _  _\n  | _ )| _ )/ __|  | _ ) | | | |  | |  | __|_   _|_ _| \\| |\n  | _ \\| _ \\\\__ \\  | _ \\ |_| | |__| |__| _|  | |  | || .` |\n  |___/|___/|___/  |___/\\___/|____|____|___| |_| |___|_|\\_|\n          ~~ The Underground. Pick a contract. Get paid. ~~\n", "CASSETTE": "\n  .-------------------------------------.\n  |  .-------------------------------.  |\n  |  |  NETRUNNER '86  MIXTAPE  C90  |  |\n  |  '-------------------------------'  |\n  |      __                   __        |\n  |     /  \\    _________    /  \\       |\n  |    | () |  |_________|  | () |      |\n  |     \\__/                 \\__/       |\n  |   _______________________________   |\n  '--/_______________________________\\--'\n"}, "story": {"1": {"number": 1, "title": "CARRIER DETECT", "scenes": [{"type": "text", "art": "TERMINAL", "text": "OCTOBER 1986. 2:13 AM.\n\nThe house is asleep. The only light in your bedroom is the green glow of a secondhand ACME PC/XT and the blinking LEDs of a 2400 baud modem you are still paying off.\n\nYou go by {handle} on the boards. Nobody there knows your real name. That is the point."}, {"type": "text", "cutscene": "MODEM", "speaker": "THE DEAD LETTER BBS", "text": "*** 1 NEW PRIVATE MESSAGE ***\n\nFROM: CASSANDRA\nTO: {handle}\n\nI've watched you poke around the phone company switches. You're careful. I like careful.\n\nI need someone for a job that matters. But first, prove you're more than talk.\n\nRidgemont High still runs its admin box on a dial-up line. Get in. Pull the staff directory. Don't get traced.\n\n- C"}, {"type": "mission", "mission": {"id": "story_1_ridgemont", "title": "Proof of Skill", "client": "CASSANDRA", "brief": "Ridgemont High's admin computer is barely protected. Scan the subnet, connect, crack the keypad lock and download staff_dir.txt. Tip: read files while you're in there.\n\nNEW HERE? Commands: scan, connect <ip>, crack, ls, cat <file>, get <file>, dc. Watch the TRACE meter in your prompt. If it hits 100% you're caught.", "reward": 150, "rep": 3, "trace_rate": 3, "objectives": [{"type": "download", "host": "10.0.1.20", "file": "staff_dir.txt"}], "hosts": {"10.0.1.20": {"name": "RIDGEMONT-ADMIN", "security": 1, "lock": "keypad", "banner": "RIDGEMONT HIGH SCHOOL - ADMINISTRATIVE SYSTEM\nUNAUTHORIZED ACCESS IS A VIOLATION OF DISTRICT POLICY", "files": {"staff_dir.txt": "STAFF DIRECTORY 86/87\nPRINCIPAL ......... R. VERNON\nCOMPUTER LAB ...... M. HALLORAN\nGUIDANCE .......... J. FERRIS\nNIGHT SYSOP ....... (contractor, Omnidyne Systems)", "grades.db": "[binary data - 48 student records]", "sysop_note.txt": "Halloran - Omnidyne's tech left their relay password taped to the lab terminal AGAIN. I've told them. 'nightowl' is not a secure password.\n- Vernon"}}}}}, {"type": "text", "speaker": "CASSANDRA", "text": "Clean work. And you noticed the Omnidyne contractor, didn't you?\n\nThat's the real job. Omnidyne Systems builds 'network management software' for the phone company. Something in their lab is called BASILISK, and I need to know what it is."}, {"type": "choice", "prompt": "How do you reply?", "options": [{"label": "\"Who are you, really?\"", "flag": "asked_identity", "text": "CASSANDRA: Someone who used to work there. Someone who quit when they saw the spec sheets. That's all you get for now."}, {"label": "\"What's it pay?\"", "flag": "asked_money", "text": "CASSANDRA: 600 credits on delivery. More if what you find is as bad as I think it is. Mercenary. I can work with that."}, {"label": "\"Why me?\"", "flag": "asked_why", "text": "CASSANDRA: Because nobody at Omnidyne has ever heard of you. Yet."}]}, {"type": "mission", "mission": {"id": "story_1_omnidyne", "title": "Basilisk", "client": "CASSANDRA", "brief": "Omnidyne has two machines on this exchange: a maintenance relay and the R&D mainframe. The mainframe's lock is nasty. Cracking it the hard way will light up the trace. Look for an easier way in.\n\nGet project_basilisk.txt from the mainframe, and wipe access.log on the relay so they never know you passed through.", "reward": 600, "rep": 8, "trace_rate": 4, "objectives": [{"type": "download", "host": "192.168.7.2", "file": "project_basilisk.txt"}, {"type": "delete", "host": "192.168.7.1", "file": "access.log"}], "hosts": {"192.168.7.1": {"name": "OMNI-RELAY", "security": 1, "lock": "keypad", "password": "nightowl", "banner": "OMNIDYNE SYSTEMS // MAINTENANCE RELAY 7", "files": {"access.log": "02:31 CONNECT 555-0199 ... <- that's you\n02:31 AUTH OK", "ops_memo.txt": "To all night staff: the R&D mainframe operator password has been rotated per policy. New password is 'tiresias'. Please stop writing it on the whiteboard.", "readme.txt": "Relay 7 forwards maintenance traffic to RND-MAINFRAME (192.168.7.2)."}}, "192.168.7.2": {"name": "RND-MAINFRAME", "security": 3, "lock": "wordlist", "password": "tiresias", "banner": "OMNIDYNE R&D  //  CLEARANCE LEVEL 4 REQUIRED", "files": {"project_basilisk.txt": "PROJECT BASILISK - INTERNAL ONLY\n\nPhase 1: passive monitoring of all switched calls in the Mid-Atlantic exchange.\nPhase 2: automated identification of modem users by line signature.\nPhase 3: 'pre-emptive disconnection' of flagged individuals.\n\nStatus: PHASE 1 LIVE. PHASE 2 IN TESTING.", "budget_q3.txt": "Federal contract #DX-1147: $14,200,000", "lunch_menu.txt": "Thursday: mystery meatloaf"}}}}}, {"type": "text", "cutscene": "BASILISK", "speaker": "CASSANDRA", "text": "...\n\nPhase 2 is already in testing, {handle}. They can fingerprint a modem by the way it hisses on the line. Every hacker on the East Coast is about to be on a list.\n\nIncluding you. Including me.\n\nStay off the big boards for a while. I'll be in touch."}, {"type": "text", "text": "END OF CHAPTER 1\n\nThe Job Board is still open if you want to earn some credits and upgrade your rig before Chapter 2."}]}, "2": {"number": 2, "title": "PHASE TWO", "scenes": [{"type": "text", "art": "TERMINAL", "text": "NOVEMBER 1986. 11:48 PM.\n\nThree weeks. No word from CASSANDRA.\n\nYou kept your head down like she said. Small jobs, clean lines, no big boards. But tonight the Dead Letter BBS won't answer. Busy signal, every time, for six hours straight.\n\nBoards don't stay busy for six hours. Somebody took it down."}, {"type": "text", "cutscene": "RING", "speaker": "UNKNOWN CALLER", "text": "*** INCOMING MESSAGE ON YOUR PRIVATE LINE ***\n\n{handle}. Don't hang up.\n\nThey call me GRIFFIN. I ran the Dead Letter's backup node until Omnidyne security raided the sysop's apartment last night. The main board is gone. But the backup still answers, and CASSANDRA left something in her mailbox before she went dark.\n\nI can't get in. They changed the sysop password when they seized the board. You can."}, {"type": "mission", "mission": {"id": "story_2_deadletter", "title": "Dead Drop", "client": "GRIFFIN", "brief": "The Dead Letter backup node is still on the line. Get into it and read CASSANDRA's last message (cassandra.msg). Feds were on this board last night, so expect them to be watching the trace.", "reward": 250, "rep": 4, "trace_rate": 5, "objectives": [{"type": "read", "host": "10.66.6.13", "file": "cassandra.msg"}], "hosts": {"10.66.6.13": {"name": "DEADLETTER-BAK", "security": 2, "lock": "wordlist", "banner": "THE DEAD LETTER BBS // BACKUP NODE\n*** THIS SYSTEM HAS BEEN SEIZED. ALL ACCESS IS MONITORED. ***", "files": {"cassandra.msg": "To whoever gets this. Probably you, {handle}.\n\nPhase 2 goes live at the Hollow Creek exchange on the 21st. Every modem on that switch gets fingerprinted and logged to a watchlist.\n\nI built a jammer: noise.bin. Load it onto the exchange switch and the fingerprints come out as static. The exchange relay's maintenance password is 'lineman86'. I couldn't get close enough to do it myself.\n\nDon't trust anyone who says they know me.\n\n- C", "seizure_notice.txt": "BY ORDER OF THE U.S. DISTRICT COURT: the contents of this system have been seized as evidence.", "userlist.dat": "[214 user records - purged]"}}}}}, {"type": "text", "speaker": "GRIFFIN", "text": "You got in? What did she say? Send it to me. Every word.\n\nI can help you with the exchange. I know that switch. Just tell me what she left you."}, {"type": "choice", "prompt": "CASSANDRA said not to trust anyone who claims to know her. What do you tell GRIFFIN?", "options": [{"label": "Send GRIFFIN the whole message", "flag": "trusted_griffin", "text": "GRIFFIN: ...Thank you, {handle}. I'll meet you on the exchange line. I'll keep the operators busy while you work."}, {"label": "Tell GRIFFIN the board was empty", "flag": "lied_to_griffin", "text": "GRIFFIN: Empty. Right.\n\nThe line goes quiet for a long time. Then: \"Good luck, {handle}.\" Click."}]}, {"type": "mission", "mission": {"id": "story_2_exchange", "title": "Static", "client": "CASSANDRA (by dead drop)", "brief": "The Hollow Creek exchange has two machines on the line: a maintenance relay and the ESS switch that runs Phase 2. The switch is locked down hard. Use the relay password from CASSANDRA's message, look around for a way into the switch, then upload noise.bin to it and grab the watchlist so you know who they're after.", "reward": 900, "rep": 10, "trace_rate": 5, "payload": ["noise.bin"], "objectives": [{"type": "upload", "host": "172.31.21.2", "file": "noise.bin"}, {"type": "download", "host": "172.31.21.2", "file": "watchlist.dat"}], "hosts": {"172.31.21.1": {"name": "HC-MAINT-RELAY", "security": 2, "lock": "keypad", "password": "lineman86", "banner": "HOLLOW CREEK CENTRAL OFFICE // MAINTENANCE RELAY", "files": {"shift_log.txt": "23:10 Omnidyne techs on site for 'Phase 2 acceptance test'.\n23:40 Omnidyne changed the ESS operator password AGAIN. New one is 'cerberus'. They taped it to the frame. Of course they did.", "readme.txt": "Relay forwards craft access to HC-ESS-SWITCH (172.31.21.2)."}}, "172.31.21.2": {"name": "HC-ESS-SWITCH", "security": 3, "lock": "keypad", "password": "cerberus", "banner": "HOLLOW CREEK ESS // OMNIDYNE BASILISK PHASE 2 // ACCEPTANCE TEST IN PROGRESS", "files": {"watchlist.dat": "BASILISK PHASE 2 - FLAGGED LINE SIGNATURES\n\n0001  555-0142  'PH4NT0M'\n0002  555-0177  'ACID_BURN'\n0003  555-0199  '{handle}'\n0004  555-0108  'CASSANDRA'  STATUS: LOCATED\n0005  555-0123  'GRIFFIN'    STATUS: INFORMANT", "phase2.cfg": "fingerprint_mode=ACTIVE\nreport_to=OMNIDYNE-RND\ndisconnect_flagged=PENDING_APPROVAL", "basilisk.log": "Signature capture running. 1,882 lines profiled."}}}}}, {"type": "text", "requires": {"trusted_griffin": true}, "speaker": "WATCHLIST.DAT", "text": "0005  555-0123  'GRIFFIN'  STATUS: INFORMANT\n\nYou read it three times.\n\nGRIFFIN works for them. You sent an informant every word CASSANDRA wrote, including where the jammer was going. They knew you were coming tonight. The only reason you got out is that noise.bin went live before they could trace you.\n\nAnd CASSANDRA... STATUS: LOCATED."}, {"type": "text", "requires": {"lied_to_griffin": true}, "speaker": "WATCHLIST.DAT", "text": "0005  555-0123  'GRIFFIN'  STATUS: INFORMANT\n\nYou let out a breath you didn't know you were holding.\n\nCASSANDRA was right. If you'd sent GRIFFIN that message, Omnidyne would have been waiting at the exchange tonight.\n\nBut one line on the list still makes your stomach drop. CASSANDRA... STATUS: LOCATED."}, {"type": "text", "speaker": "SYSTEM", "text": "noise.bin is running on the Hollow Creek switch. Every fingerprint it captures from now on is static. Phase 2 is blind, for now.\n\nAt 3:02 AM your phone rings. Your voice line, not the modem.\n\nYou pick it up. Nobody speaks. Then a modem carrier tone screams down the line, and a single line of text crawls across your screen:\n\n  > THEY HAVE ME. OMNIDYNE TOWER. SUB-LEVEL 3. - C"}, {"type": "text", "text": "END OF CHAPTER 2\n\nCASSANDRA is inside Omnidyne Tower. Chapter 3 is coming.\n\nThe Job Board is still open. Upgrade your rig, because the next system you face won't be a school or a phone exchange."}]}, "3": {"number": 3, "title": "SUB-LEVEL 3", "scenes": [{"type": "text", "cutscene": "TOWER", "art": "TERMINAL", "text": "DECEMBER 1986. 1:15 AM.\n\nOmnidyne Tower. Forty floors of black glass downtown, and three more underground that aren't on any blueprint.\n\nYou've spent two weeks with a city directory, a scanner radio and a lot of coffee. The tower runs its doors, lifts and cameras from a facilities computer that dials out to a contractor every night at 1 AM.\n\nTonight, you'll be the one on the other end of that call."}, {"type": "mission", "mission": {"id": "story_3_facilities", "title": "Night Shift", "client": "yourself", "brief": "Get into Omnidyne Tower's facilities computer. Read the night guard roster so you know when sub-level 3 is quiet, and download the floor plan for the sub-levels. The facilities box uses an old combination-dial lock.", "reward": 300, "rep": 5, "trace_rate": 5, "objectives": [{"type": "read", "host": "10.40.0.7", "file": "guard_roster.txt"}, {"type": "download", "host": "10.40.0.7", "file": "sublevels.plan"}], "hosts": {"10.40.0.7": {"name": "OMNI-FACILITIES", "security": 2, "lock": "dial", "banner": "OMNIDYNE TOWER // BUILDING SERVICES // AFTER-HOURS MODE", "files": {"guard_roster.txt": "NIGHT ROSTER - SUB-LEVELS\n00:00-02:00  KOWALSKI (patrol)\n02:00-02:20  ** SHIFT CHANGE - SL3 DESK UNSTAFFED **\n02:20-06:00  REYES (desk)\n\nNote from Reyes: the SL3 door controller's override code is still 'ironwood'. Can someone change it before the auditors notice?", "sublevels.plan": "SL1  archive\nSL2  backup power, BASILISK core servers (OMNI-CORE)\nSL3  'secure accommodation' - 4 rooms, door controller SL3-DOORS", "lift_schedule.txt": "Freight lift locked out 23:00-05:00."}}}}}, {"type": "text", "speaker": "SYSTEM", "text": "2:00 AM. The sub-level 3 desk goes quiet for twenty minutes.\n\nYour modem has two lines tonight. One reaches the SL3 door controller. The other reaches OMNI-CORE, the machine running BASILISK itself.\n\nThere may only be time for one of them before someone notices."}, {"type": "choice", "prompt": "What do you go for?", "options": [{"label": "Both. Open CASSANDRA's door AND wipe BASILISK.", "flag": "went_for_both", "text": "Greedy. Maybe stupid. But you might never get this close again."}, {"label": "Just the door. Get CASSANDRA out.", "flag": "rescue_only", "text": "BASILISK can wait. She can't."}]}, {"type": "mission", "requires": {"went_for_both": true}, "mission": {"id": "story_3_both", "title": "Twenty Minutes", "client": "yourself", "brief": "Two targets, one window. Upload release.cmd to the SL3 door controller to open CASSANDRA's room, and delete basilisk_core.db from OMNI-CORE. The core has a memory-pattern lock. The door controller has an override code somewhere in your notes.", "reward": 1400, "rep": 14, "trace_rate": 6, "payload": ["release.cmd"], "objectives": [{"type": "upload", "host": "10.40.3.1", "file": "release.cmd"}, {"type": "delete", "host": "10.40.2.9", "file": "basilisk_core.db"}], "hosts": {"10.40.3.1": {"name": "SL3-DOORS", "security": 3, "lock": "keypad", "password": "ironwood", "banner": "SL3 ACCESS CONTROL // ROOMS 301-304", "files": {"rooms.txt": "301  EMPTY\n302  EMPTY\n303  OCCUPIED  'C.'\n304  EMPTY", "door.log": "01:58 room 303 meal tray delivered"}}, "10.40.2.9": {"name": "OMNI-CORE", "security": 2, "lock": "sequence", "banner": "BASILISK CORE // PHASE 2 STATUS: DEGRADED (SIGNAL NOISE AT HOLLOW CREEK)", "files": {"basilisk_core.db": "[4,112 line signatures - Phase 1 and 2]", "director_memo.txt": "The Hollow Creek noise is deliberate. Find the person who did it. Priority one."}}}}}, {"type": "mission", "requires": {"rescue_only": true}, "mission": {"id": "story_3_rescue", "title": "Room 303", "client": "yourself", "brief": "One target. Upload release.cmd to the SL3 door controller to open CASSANDRA's room. The controller has an override code somewhere in your notes.", "reward": 800, "rep": 9, "trace_rate": 5, "payload": ["release.cmd"], "objectives": [{"type": "upload", "host": "10.40.3.1", "file": "release.cmd"}], "hosts": {"10.40.3.1": {"name": "SL3-DOORS", "security": 3, "lock": "keypad", "password": "ironwood", "banner": "SL3 ACCESS CONTROL // ROOMS 301-304", "files": {"rooms.txt": "301  EMPTY\n302  EMPTY\n303  OCCUPIED  'C.'\n304  EMPTY", "door.log": "01:58 room 303 meal tray delivered"}}}}}, {"type": "text", "requires": {"went_for_both": true}, "speaker": "CASSANDRA", "text": "3:40 AM. Your private line rings.\n\n\"{handle}. It's me. I'm out. I walked straight up the fire stairs while every screen on SL2 went red.\n\nYou deleted the core. Four thousand names, gone. They'll rebuild it, but it'll take them a year.\n\nThey also know someone did it on purpose now. They'll come looking.\""}, {"type": "text", "requires": {"rescue_only": true}, "speaker": "CASSANDRA", "text": "3:40 AM. Your private line rings.\n\n\"{handle}. It's me. I'm out. The door just... opened. I didn't wait to ask why.\n\nBASILISK is still running. But we're both alive, and I know things about it now that nobody outside that building does.\""}, {"type": "text", "cutscene": "BASILISK", "speaker": "CASSANDRA", "text": "\"My name is Dr. Elena Voss. I designed BASILISK. When I found out what Phase 3 was for, I tried to quit. They didn't let me.\n\nThere's a copy of the full Phase 3 plan. Not at the tower. At a government data centre in the mountains, somewhere called SITE NINE.\n\nGet some sleep. Then upgrade that rig of yours. Where we're going next doesn't use dial-up locks.\""}, {"type": "text", "text": "END OF CHAPTER 3\n\nCASSANDRA is free. SITE NINE is waiting. Chapter 4 is coming.\n\nNew contracts are up on the Job Board."}]}}, "jobs": [{"id": "job_pizza", "title": "Free Pizza Friday", "client": "HUNGRYMAN", "brief": "Luigi's Pizza runs their delivery orders off a cheap dial-up box. Plant my coupon file so every order this week is free. Don't ask.", "min_rep": 0, "reward": 120, "rep": 2, "trace_rate": 3, "payload": ["coupon.dat"], "objectives": [{"type": "upload", "host": "10.4.4.1", "file": "coupon.dat"}], "hosts": {"10.4.4.1": {"name": "LUIGIS-ORDERS", "security": 1, "lock": "keypad", "files": {"orders.txt": "14 x LARGE PEPPERONI - DEL TO 42 ELM ST", "menu.txt": "Pepperoni $6.99"}}}}, {"id": "job_arcade", "title": "High Score Hero", "client": "TH3_W1Z4RD", "brief": "Some kid at the Starcade keeps beating my GALAXOID record. Their scoreboard syncs to a host downtown. Delete his score file. Grab the master scores list for me too.", "min_rep": 0, "reward": 180, "rep": 2, "trace_rate": 3, "objectives": [{"type": "delete", "host": "10.9.0.3", "file": "kid_score.sav"}, {"type": "download", "host": "10.9.0.3", "file": "hiscores.lst"}], "hosts": {"10.9.0.3": {"name": "STARCADE-SYNC", "security": 1, "lock": "wordlist", "files": {"kid_score.sav": "GALAXOID 1,204,880 - MKX", "hiscores.lst": "1. MKX 1204880\n2. WZD 1188020\n3. AAA 900000"}}}}, {"id": "job_bank_memo", "title": "Insider Information", "client": "MR. GREY", "brief": "First Federal of Hollow Creek is about to announce a merger. Their memo server has the details. Read it and bring me a copy. Their ops box is weak, the memo server is not. Be smart.", "min_rep": 8, "reward": 450, "rep": 5, "trace_rate": 5, "objectives": [{"type": "download", "host": "172.16.3.9", "file": "merger_memo.txt"}], "hosts": {"172.16.3.4": {"name": "FFHC-OPS", "security": 1, "lock": "keypad", "files": {"shift_notes.txt": "Remember the memo server password is the bank founder's name: 'whitlock'. -IT"}}, "172.16.3.9": {"name": "FFHC-MEMO", "security": 3, "lock": "keypad", "password": "whitlock", "files": {"merger_memo.txt": "CONFIDENTIAL: First Federal to merge with Atlantic Trust, announced Nov 3.", "holiday.txt": "Office party Dec 19"}}}}, {"id": "job_cleanup", "title": "Erase Me", "client": "GH0ST", "brief": "I got sloppy. The county police records system has a file on me. Delete it, and delete the log that shows you did. Then download their arrest index so I know who else they're watching.", "min_rep": 15, "reward": 800, "rep": 8, "trace_rate": 6, "objectives": [{"type": "delete", "host": "172.20.0.50", "file": "case_8812.rec"}, {"type": "delete", "host": "172.20.0.50", "file": "audit.log"}, {"type": "download", "host": "172.20.0.50", "file": "arrest_index.db"}], "hosts": {"172.20.0.50": {"name": "COUNTY-RECORDS", "security": 3, "lock": "wordlist", "files": {"case_8812.rec": "SUBJECT: 'GH0ST' - wire fraud - PENDING", "audit.log": "ALL ACCESS LOGGED", "arrest_index.db": "[1,402 records]"}}}}, {"id": "job_radio", "title": "Pirate Radio", "client": "DJ STATIC", "brief": "WKRZ's overnight playlist runs off a dusty box in the station basement. Swap their playlist for my mixtape. Nobody listens at 4 AM anyway. Except everybody who matters.", "min_rep": 0, "reward": 160, "rep": 2, "trace_rate": 3, "payload": ["mixtape.lst"], "objectives": [{"type": "upload", "host": "10.12.8.4", "file": "mixtape.lst"}, {"type": "delete", "host": "10.12.8.4", "file": "playlist.lst"}], "hosts": {"10.12.8.4": {"name": "WKRZ-AUTOMATION", "security": 1, "lock": "dial", "files": {"playlist.lst": "04:00 Easy Listening Hour\n05:00 Farm Report", "station_id.txt": "WKRZ 98.6 - The Smooth Sound"}}}}, {"id": "job_arcade2", "title": "Tournament Fix", "client": "TH3_W1Z4RD", "brief": "The Starcade is running a GALAXOID tournament and the bracket sits on their sync box again. They upgraded the lock to one of those memory-pattern things. Get me the bracket so I know who I'm up against.", "min_rep": 5, "reward": 260, "rep": 3, "trace_rate": 4, "objectives": [{"type": "download", "host": "10.9.0.3", "file": "bracket.txt"}], "hosts": {"10.9.0.3": {"name": "STARCADE-SYNC", "security": 2, "lock": "sequence", "files": {"bracket.txt": "ROUND 1: WZD vs MKX\nROUND 1: ZER vs AAA", "prizes.txt": "1st: 500 tokens + jacket"}}}}, {"id": "job_museum", "title": "The Curator's Ledger", "client": "MADAME X", "brief": "The Metropolitan Museum keeps a private ledger of 'quietly acquired' pieces. A collector I know would pay a lot to see it. Their records office has a safe-dial lock. Their vault index is tougher. The records office will know the way in.", "min_rep": 20, "reward": 950, "rep": 7, "trace_rate": 6, "objectives": [{"type": "download", "host": "172.18.4.20", "file": "private_ledger.db"}], "hosts": {"172.18.4.11": {"name": "MET-RECORDS", "security": 2, "lock": "dial", "files": {"it_note.txt": "Vault index password reset to 'goldleaf' after the holiday party incident. -Facilities IT"}}, "172.18.4.20": {"name": "MET-VAULT-INDEX", "security": 3, "lock": "sequence", "password": "goldleaf", "files": {"private_ledger.db": "[37 entries - provenance: UNKNOWN]", "catalogue.txt": "Public collection: 12,400 items"}}}}, {"id": "job_satellite", "title": "Dish Network", "client": "ORBITAL", "brief": "Zenith Satellite's uplink scheduler decides which channels get beamed where. Plant my schedule so the whole East Coast gets three hours of public-domain cartoons on Saturday morning. Wipe the uplink log after. Big job, big pay.", "min_rep": 30, "reward": 1500, "rep": 10, "trace_rate": 7, "payload": ["cartoons.sch"], "objectives": [{"type": "upload", "host": "192.168.40.2", "file": "cartoons.sch"}, {"type": "delete", "host": "192.168.40.2", "file": "uplink.log"}], "hosts": {"192.168.40.2": {"name": "ZENITH-UPLINK", "security": 3, "lock": "dial", "files": {"uplink.log": "ALL SCHEDULE CHANGES LOGGED", "schedule.sch": "SAT 08:00 Infomercial\nSAT 09:00 Infomercial"}}}}], "upgrades": {"modem": {"name": "Modem", "desc": "Faster modem: each command adds less trace", "levels": ["2400 baud", "9600 baud", "14.4k", "ISDN"], "prices": [400, 900, 2000]}, "cracker": {"name": "Cracker", "desc": "Better cracking software: +1 attempt per lock", "levels": ["CRACK.COM v1", "CRACK.COM v2", "ICEBREAKER", "BLACK ICE"], "prices": [300, 800, 1800]}}, "corps": ["Cyberdyne Logistics", "Tessier Freight", "Hollow Creek Savings", "Ma Bell Exchange 9", "Weyland Insurance", "Krupp Chemical", "Metro Transit Auth.", "Delos Leisure", "Zenith Satellite", "Gordon Electronics", "St. Jude Hospital", "WOPR Defense Labs"], "handles": ["ZER0_COOL", "PH4NT0M", "ACID_BURN", "LORD_NIKON", "CEREAL", "MR_GREY", "NIGHTSHADE", "BYTE_BANDIT", "D3L1R1UM", "CAPTAIN_CRUNCH"], "loot": ["payroll.dat", "blueprints.cad", "customer_list.db", "launch_codes.txt", "patient_files.db", "routing_table.cfg", "salary_review.txt", "prototype_specs.doc"], "logs": ["access.log", "audit.log", "syslog.dat"], "junk": {"readme.txt": "Authorized personnel only.", "todo.txt": "- buy floppies\n- fix printer", "memo.txt": "Reminder: change your passwords quarterly."}, "words": {"5": ["CRASH", "LOGIN", "VIRUS", "PHONE", "MODEM", "ROGUE", "CRYPT", "PROXY", "SHELL", "GHOST", "CABLE", "TOKEN", "SPOOF", "BYTES", "PATCH", "RELAY"], "6": ["ACCESS", "SYSTEM", "KERNEL", "BUFFER", "CIPHER", "BINARY", "VECTOR", "SOCKET", "MATRIX", "PACKET", "LOCKED", "HACKER", "SECURE", "SIGNAL", "STATIC", "REMOTE"], "7": ["NETWORK", "PAYLOAD", "TROJANS", "HACKERS", "ROUTERS", "COMPILE", "DECRYPT", "ENCRYPT", "MONITOR", "PROGRAM", "BITRATE", "CONSOLE", "SPOOFER", "SCANNER", "KEYMAPS", "CHANNEL"]}};
+
+/* ===================================================================
+   UI: everything visual goes through these helpers (mirrors ui.py)
+   =================================================================== */
+const out = document.getElementById("out");
+const cmd = document.getElementById("cmd");
+const ps = document.getElementById("ps");
+const chipsEl = document.getElementById("chips");
+const seg = c => t => ({ t: String(t), c });
+const fg = seg("fg"), hi = seg("hi"), dim = seg("dim"), alert = seg("alert"), info = seg("info");
+let skipping = false;
+
+function scroll() { out.scrollTop = out.scrollHeight; }
+// Keep the newest line in view: new text, typewriter characters, and the log
+// area shrinking (tap buttons appearing, phone keyboard opening) all re-pin it.
+new MutationObserver(scroll).observe(out, { childList: true, subtree: true, characterData: true });
+new ResizeObserver(scroll).observe(out);
+if (window.visualViewport) visualViewport.addEventListener("resize", scroll);
+function parts(p, cls) {
+  const arr = Array.isArray(p) ? p : [typeof p === "string" ? { t: p, c: cls || "fg" } : p];
+  const frag = document.createDocumentFragment();
+  for (const s of arr) {
+    const x = typeof s === "string" ? { t: s, c: cls || "fg" } : s;
+    const span = document.createElement("span");
+    span.className = x.c; span.textContent = x.t;
+    frag.appendChild(span);
+  }
+  return frag;
+}
+function line(p, cls) {
+  const d = document.createElement("div");
+  d.className = "ln";
+  d.appendChild(parts(p, cls));
+  out.appendChild(d); scroll();
+  return d;
+}
+function say(text = "", cls = "fg") {
+  if (typeof text !== "string") return line(text, cls);
+  for (const l of text.split("\n")) line(l, cls);
+}
+function clear() { CRT.ghost(); out.innerHTML = ""; }
+function sleep(ms) { return skipping ? Promise.resolve() : new Promise(r => setTimeout(r, ms)); }
+
+const measure = (() => {
+  const s = document.createElement("span");
+  s.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font:inherit;letter-spacing:0";
+  s.textContent = "0".repeat(50);
+  return () => { out.appendChild(s); const w = s.getBoundingClientRect().width / 50; s.remove(); return w || 10; };
+})();
+function art(name, cls = "fg") {
+  const text = (DATA.art[name] || "").replace(/^\n|\n$/g, "");
+  const pre = document.createElement("pre");
+  pre.className = "art " + cls; pre.textContent = text;
+  out.appendChild(pre);
+  fitArt(pre); scroll();
+}
+function fitArt(pre) {
+  if (pre.dataset.cols) return fitCutscene(pre);
+  const longest = Math.max(...pre.textContent.split("\n").map(l => l.length), 1);
+  const avail = out.clientWidth - 40;
+  const need = longest * measure();
+  pre.style.fontSize = need > avail ? (avail / need) + "em" : "";
+}
+// Cutscenes are sized to fill the screen (up to 1.8x) and centred.
+function fitCutscene(pre) {
+  const fs = parseFloat(getComputedStyle(out).fontSize) || 16;
+  const w = +pre.dataset.cols * measure(), h = +pre.dataset.rows * 1.05 * fs;
+  const availW = out.clientWidth - 40, availH = out.clientHeight - 48;
+  const k = Math.max(.3, Math.min(availW / w, availH / h, 1.8));
+  pre.style.fontSize = k + "em";
+  pre.style.marginTop = Math.max(0, (availH - h * k) / 2) + "px";
+}
+addEventListener("resize", () => document.querySelectorAll("pre.art").forEach(fitArt));
+
+async function typeOut(text, cls = "fg", delay = 12) {
+  for (const l of text.split("\n")) {
+    const d = line("", cls);
+    const span = d.firstChild;
+    if (skipping) { span.textContent = l; continue; }
+    for (const ch of l) { span.textContent += ch; scroll(); if (!skipping) await sleep(delay); }
+    scroll();
+  }
+}
+function box(rows, title) {
+  const b = document.createElement("div");
+  b.className = "box";
+  if (title) { const t = document.createElement("div"); t.className = "title"; t.textContent = `[ ${title} ]`; b.appendChild(t); }
+  for (const r of rows) {
+    if (r instanceof Node) { b.appendChild(r); continue; }
+    const d = document.createElement("div"); d.className = "ln";
+    d.appendChild(parts(r)); b.appendChild(d);
+  }
+  out.appendChild(b); scroll();
+}
+async function progress(label, secs = 1, steps = 24) {
+  const d = line([fg(label + " [")]);
+  const bar = document.createElement("span"); bar.className = "hi"; d.appendChild(bar);
+  for (let i = 0; i < steps; i++) { bar.textContent += "#"; await sleep(secs * 1000 / steps); }
+  d.appendChild(parts([fg("] OK")]));
+}
+
+/* ===================================================================
+   CRT effects: power on/off, glitches, the phosphor afterglow left by
+   clear(), and the CRT EFFECTS setting (Themes menu). The curved glass and
+   rolling band are pure CSS (.fx-glass, .fx-band).
+   =================================================================== */
+const CRT = (() => {
+  const crt = document.getElementById("crt"), power = document.getElementById("power");
+  const noise = document.getElementById("static");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let on = true, glitchTimer = 0, noiseRaf = 0;
+  try { on = localStorage.getItem("netrunner86.crt") !== "0"; } catch {}
+  const apply = () => { if (on) delete document.documentElement.dataset.crt; else document.documentElement.dataset.crt = "off"; };
+  apply();
+  function setOn(v) { on = v; try { localStorage.setItem("netrunner86.crt", v ? "1" : "0"); } catch {} apply(); }
+  function animate(cls, ms) {
+    if (reduce) { power.className = "power"; return Promise.resolve(); }
+    power.className = "power " + cls;
+    return new Promise(r => setTimeout(r, ms));
+  }
+  async function powerOn() { Music.sfx("on"); await animate("on", 900); power.className = "power"; }
+  async function powerOff() { Music.sfx("off"); await animate("off", 750); power.className = reduce ? "power" : "power dark"; }
+  function standby() { power.className = "power"; }
+  function drawStatic() {
+    const g = noise.getContext("2d"), img = g.createImageData(noise.width, noise.height), d = img.data;
+    const tear = Math.random() * noise.height | 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const row = (i / 4 / noise.width) | 0;
+      const v = Math.abs(row - tear) < 3 ? 255 : Math.random() * 255 | 0;
+      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    if (crt.classList.contains("glitch")) noiseRaf = requestAnimationFrame(drawStatic);
+  }
+  // A short burst of interference. hard = the big one (getting traced).
+  function glitch(ms = 260, hard = false) {
+    if (reduce) return;
+    crt.classList.add("glitch"); crt.classList.toggle("hard", hard);
+    cancelAnimationFrame(noiseRaf); drawStatic();
+    Music.sfx(hard ? "glitch-hard" : "glitch");
+    clearTimeout(glitchTimer);
+    glitchTimer = setTimeout(() => { crt.classList.remove("glitch", "hard"); cancelAnimationFrame(noiseRaf); }, ms);
+  }
+  // Afterglow: a copy of the outgoing screen fades off the phosphor.
+  function ghost() {
+    if (!on || reduce || !out.firstChild) return;
+    const g = document.createElement("div"), inner = document.createElement("div");
+    g.className = "ghost"; g.setAttribute("aria-hidden", "true");
+    inner.innerHTML = out.innerHTML;
+    inner.style.transform = `translateY(${-out.scrollTop}px)`;
+    g.appendChild(inner); crt.appendChild(g);
+    setTimeout(() => g.remove(), 800);
+  }
+  return { powerOn, powerOff, standby, glitch, ghost, setOn, get on() { return on; } };
+})();
+
+/* ===================================================================
+   Cutscenes: short animated ASCII scenes at story moments. A story scene
+   plays one first when it has "cutscene": "NAME" (see SCENES below).
+   Each draws frames into one <pre>: «text» is bright, ‹text› is red.
+   Any key or tap skips to the end.
+   =================================================================== */
+const Cutscene = (() => {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const GLYPHS = "#%&@$*+=/\\<>?!;:01";
+  const vis = l => l.replace(/[«»‹›]/g, "");
+  const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  let pre = null, width = 0;
+
+  function stage(w, h) {
+    pre = document.createElement("pre"); pre.className = "art cutscene fg"; width = w;
+    pre.dataset.cols = w; pre.dataset.rows = h;
+    out.appendChild(pre); fitCutscene(pre);
+  }
+  function draw(lines) {
+    pre.innerHTML = lines.map(l => esc(l + " ".repeat(Math.max(0, width - vis(l).length))))
+      .join("\n").replace(/«([^»]*)»/g, '<span class="hi">$1</span>').replace(/‹([^›]*)›/g, '<span class="alert">$1</span>');
+  }
+  const frame = async (lines, ms) => { draw(lines); await sleep(ms); };
+  // Random glyphs that settle into the target, roughly left to right.
+  function scrambled(lines, t) {
+    return lines.map(l => [...vis(l)].map((ch, i) => ch === " " || Math.random() * .7 + i / 120 < t ? ch
+      : GLYPHS[Math.random() * GLYPHS.length | 0]).join(""));
+  }
+  async function scrambleIn(lines, steps = 14, ms = 55, above = [], below = []) {
+    for (let i = 1; i <= steps; i++) await frame([...above, ...scrambled(lines, i / steps), ...below], ms);
+    draw([...above, ...lines, ...below]);
+  }
+
+  // ---- MODEM: dialling into a board ----------------------------------
+  async function modem() {
+    const W = 50, KEYS = ["HS", "AA", "CD", "OH", "RD", "SD", "TR", "MR"];
+    const led = { HS: 1, TR: 1, MR: 1 };
+    const box = s => "|  " + s + " ".repeat(Math.max(0, W - 6 - vis(s).length)) + "  |";
+    const view = (cmdLine, status, wave = "") => [
+      "." + "-".repeat(W - 2) + ".",
+      box("«HAYES»  SMARTMODEM 2400"),
+      box(""),
+      box(KEYS.map(k => led[k] ? `«${k}»` : k).join("  ")),
+      box(KEYS.map(k => led[k] ? "«##»" : "--").join("  ")),
+      "'" + "-".repeat(W - 2) + "'",
+      "     ||",
+      "=====++" + "=".repeat(W - 7),
+      "",
+      "C:\\> " + cmdLine,
+      "",
+      wave ? "  [" + wave + "]" : "",
+      "  " + status,
+    ];
+    stage(W, 13);
+    const cmdText = "ATDT 555-0199";
+    for (let i = 0; i <= cmdText.length; i++) await frame(view(cmdText.slice(0, i) + "_", ""), i ? 70 : 500);
+    led.OH = 1;
+    Music.sfx("dialtone", .45); await frame(view(cmdText, "OFF HOOK"), 500);
+    let dialled = "";
+    for (const d of "5550199") {
+      dialled += d; led.SD = dialled.length % 2;
+      Music.sfx("dtmf", d); await frame(view(cmdText, "DIALING " + dialled), 120);
+    }
+    led.SD = 0;
+    for (let r = 0; r < 2; r++) {
+      Music.sfx("ringback");
+      await frame(view(cmdText, "RINGING" + ".".repeat(r + 1)), 1300);
+      await frame(view(cmdText, "RINGING" + ".".repeat(r + 1)), 500);
+    }
+    Music.sfx("carrier");
+    let wave = "";
+    for (let i = 0; i < 26; i++) {
+      wave = (wave + "^-_=/\\v-^_."[Math.random() * 10 | 0]).slice(-(W - 8));
+      led.RD = i % 2; led.SD = (i + 1) % 2; led.CD = i > 18 && i % 2;
+      await frame(view(cmdText, "HANDSHAKE", wave.padEnd(W - 8)), 75);
+    }
+    led.RD = led.SD = 0; led.CD = 1;
+    await frame(view(cmdText, "«CONNECT 2400»", "=".repeat(W - 8)), 600);
+    draw(view(cmdText, "«CONNECT 2400»   CARRIER DETECTED", "=".repeat(W - 8)));
+  }
+
+  // ---- RING: the private line rings, you pick up -------------------------
+  async function ring() {
+    const W = 54;
+    const HANDSET = ["         ___________________________", "        (___( )_______________( )___)", "             ||               ||"];
+    const LIFTED = ["   ___________________________", "  (___( )_______________( )___)", ""];
+    const BODY = [
+      "     .-------''---------------''-------.",
+      "    /          .-----------.            \\",
+      "   /           |  PRIV  2  |             \\",
+      "  |            '-----------'              |",
+      "  |        [1]      [2]      [3]          |",
+      "  |        [4]      [5]      [6]          |",
+      "  |        [7]      [8]      [9]          |",
+      "  |        [*]      [0]      [#]          |",
+      "  '---------------------------------------'",
+    ];
+    const phone = (lifted, shake, waves) => [...(lifted ? LIFTED : HANDSET), ...BODY].map((l, i) => {
+      let row = " ".repeat(5 + shake) + l;
+      if (waves && i === 6) row = (" ".repeat(shake) + "(((" + row.slice(shake + 3)).padEnd(W - 4) + ")))";
+      return row.replace("(((", "«(((»").replace(")))", "«)))»");
+    });
+    stage(W, 14);
+    await frame([...phone(false, 0, false), "", ""], 500);
+    for (let r = 0; r < 3; r++) {
+      Music.sfx("ring");
+      for (let i = 0; i < 8; i++) await frame([...phone(false, i % 2, true), "", "        " + "«R I N G»   ".repeat(r + 1)], 60);
+      await frame([...phone(false, 0, false), "", ""], 900);
+    }
+    Music.sfx("click");
+    await frame([...phone(true, 0, false), "", "        *click*"], 700);
+    draw([...phone(true, 0, false), "", "        *click*   «LINE 2 // CALLER UNKNOWN»"]);
+  }
+
+  // ---- TOWER: Omnidyne Tower at night, then down to sub-level 3 -----------
+  async function tower() {
+    const W = 50, H = 17, COLS = 8, FLOORS = 13, left = 12, wide = COLS * 3 + 1;
+    const lit = Array.from({ length: FLOORS }, () => Array.from({ length: COLS }, () => Math.random() < .35));
+    const stars = Array.from({ length: 14 }, () => [Math.random() * 4 | 0, Math.random() * W | 0]);
+    const pad = " ".repeat(left), mid = s => { const n = wide - vis(s).length; return " ".repeat(n >> 1) + s + " ".repeat(n - (n >> 1)); };
+    function world(sl3) {
+      const sky = Array.from({ length: 4 }, () => [..." ".repeat(W)]);
+      for (const [r, c] of stars) sky[r][c] = Math.random() < .8 ? "." : "*";
+      [..." _ "].forEach((ch, i) => sky[1][41 + i] = ch); [..."(_)"].forEach((ch, i) => sky[2][41 + i] = ch);
+      const rows = [
+        ...sky.map(r => r.join("")),
+        pad + " " + mid("|"),
+        pad + " " + mid("__|__"),
+        pad + "." + "-".repeat(wide) + ".",
+        pad + "|" + mid("«OMNIDYNE SYSTEMS»") + "|",
+        pad + "|" + "-".repeat(wide) + "|",
+      ];
+      for (const f of lit) rows.push(pad + "| " + f.map(w => w ? "«#»" : ".").join("  ") + " |");
+      rows.push(pad + "|" + mid("[ || ]") + "|");
+      rows.push("_".repeat(left) + "|" + "_".repeat(wide) + "|" + "_".repeat(W - left - wide - 2));
+      rows.push("");
+      for (const n of ["SUB-LEVEL 1", "SUB-LEVEL 2", "SUB-LEVEL 3"]) {
+        rows.push(pad + ":" + " ".repeat(wide) + ":");
+        const mark = n.endsWith("3") ? sl3 : ".";
+        rows.push(pad + ":  " + n + " ".repeat(wide - 4 - n.length - vis(mark).length) + mark + "  :");
+      }
+      rows.push(pad + "'" + ".".repeat(wide) + "'");
+      return rows;
+    }
+    stage(W, H + 2);
+    for (let i = 0; i < 18; i++) {
+      for (let k = 0; k < 3; k++) { const f = Math.random() * FLOORS | 0, c = Math.random() * COLS | 0; lit[f][c] = !lit[f][c]; }
+      await frame(world(".").slice(0, H), 120);
+    }
+    const rows = world(".").length;
+    for (let off = 0; off <= rows - H; off++) await frame(world(".").slice(off, off + H), 90);
+    for (let i = 0; i < 6; i++) await frame(world(i % 2 ? "‹*›" : " ").slice(rows - H), 260);
+    const end = world("‹*›").slice(rows - H);
+    await scrambleIn(["OMNIDYNE TOWER  //  SUB-LEVEL 3  //  ROOM 303"], 12, 60, [...end, ""]);
+    draw([...end, "", "«OMNIDYNE TOWER»  //  SUB-LEVEL 3  //  ‹ROOM 303›"]);
+  }
+
+  // ---- BASILISK: the project logo -----------------------------------------
+  async function basilisk() {
+    const W = 46;
+    const eye = pupil => [
+      "              _.-''''''''''-._",
+      "           .-'     .----.     '-.",
+      "         .'       /  " + pupil + "  \\       '.",
+      "        (        |   " + pupil + "   |        )",
+      "         '.       \\  " + pupil + "  /       .'",
+      "           '-._    '----'    _.-'",
+      "               ''----------''",
+    ];
+    const shut = [
+      "", "", "",
+      "        (----------------------------)",
+      "         '-._                    _.-'",
+      "               ''----------''", "",
+    ];
+    const LETTERS = {
+      B: [" ___ ", "| _ )", "| _ \\", "|___/"], A: ["   _   ", "  /_\\  ", " / _ \\ ", "/_/ \\_\\"],
+      S: [" ___ ", "/ __|", "\\__ \\", "|___/"], I: [" ___ ", "|_ _|", " | | ", "|___|"],
+      L: [" _    ", "| |   ", "| |__ ", "|____|"], K: [" _  __", "| |/ /", "| ' < ", "|_|\\_\\"],
+    };
+    const word = [0, 1, 2, 3].map(r => "  " + [..."BASILISK"].map(ch => LETTERS[ch][r]).join(""));
+    stage(W, 14);
+    await scrambleIn(eye("||"), 16, 55);
+    await sleep(400);
+    for (let b = 0; b < 2; b++) { await frame(shut, 110); await frame(eye("||"), b ? 500 : 180); }
+    await frame(eye("‹||›"), 300);
+    CRT.glitch(180);
+    await scrambleIn(word, 14, 50, [...eye("‹||›"), ""]);
+    await sleep(300);
+    const tag = "  OMNIDYNE SYSTEMS  //  PHASE 2  //  EYES ONLY";
+    for (let i = 4; i <= tag.length; i += 2) await frame([...eye("‹||›"), "", ...word, "", "«" + tag.slice(0, i) + "»"], 25);
+    draw([...eye("‹||›"), "", ...word.map(l => "«" + l + "»"), "", "«" + tag + "»"]);
+  }
+
+  const SCENES = { MODEM: modem, RING: ring, TOWER: tower, BASILISK: basilisk };
+  async function play(name) {
+    const fn = SCENES[name];
+    if (!fn) return;
+    const hint = document.createElement("div");
+    hint.className = "skip-hint dim"; hint.textContent = "any key or tap to skip";
+    document.getElementById("crt").appendChild(hint);
+    // Let the key press that got us here finish first, so it doesn't count as a skip.
+    await new Promise(r => setTimeout(r, 0));
+    skipping = reduce;
+    try { await fn(); } finally { hint.remove(); }
+    await new Promise(r => setTimeout(r, skipping ? 700 : 1400));
+    skipping = false;
+  }
+  return { play, scrambleIn, names: Object.keys(SCENES) };
+})();
+
+/* input(prompt, {choices, numeric}) resolves with the typed line. Chips are
+   tap targets for phones; typing always works too. */
+let pending = null;
+function input(promptParts, opts = {}) {
+  skipping = false;
+  ps.innerHTML = ""; ps.appendChild(parts(promptParts, "hi"));
+  cmd.value = "";
+  cmd.inputMode = opts.numeric ? "numeric" : "text";
+  chipsEl.innerHTML = "";
+  // TAB completion draws on the same suggestions as the tap buttons, plus any extra words.
+  completions = [...new Set([...(opts.choices || []).map(c => typeof c === "string" ? c : c.value), ...(opts.complete || [])]
+    .map(c => c.trim()).filter(c => c.length > 1))];
+  lastTab = "";
+  for (const ch of opts.choices || []) {
+    const c = typeof ch === "string" ? { label: ch, value: ch } : ch;
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = c.label;
+    b.addEventListener("click", () => submit(c.value));
+    chipsEl.appendChild(b);
+  }
+  cmd.focus({ preventScroll: true });
+  scroll(); requestAnimationFrame(scroll);   // the prompt row and buttons just changed height
+  return new Promise(r => { pending = r; });
+}
+function submit(value) {
+  if (!pending) return;
+  const d = document.createElement("div"); d.className = "ln";
+  for (const n of ps.childNodes) d.appendChild(n.cloneNode(true));
+  const v = document.createElement("span"); v.className = "hi"; v.textContent = value; d.appendChild(v);
+  out.appendChild(d); scroll();
+  ps.innerHTML = ""; chipsEl.innerHTML = ""; cmd.value = "";
+  const r = pending; pending = null; r(value.trim());
+}
+let completions = [], lastTab = "";
+// TAB: complete the line like a shell. One match fills it in; several matches
+// fill in what they share, and a second TAB lists them.
+function complete() {
+  const typed = cmd.value.replace(/^\s+/, "");
+  const low = typed.toLowerCase();
+  const matches = completions.filter(c => c.toLowerCase().startsWith(low) && c.length > typed.length);
+  if (!matches.length) return;
+  if (matches.length === 1) { cmd.value = matches[0] + (matches[0].includes(" ") ? "" : " "); lastTab = ""; return; }
+  let common = matches[0];
+  for (const m of matches) while (!m.toLowerCase().startsWith(common.toLowerCase())) common = common.slice(0, -1);
+  if (common.length > typed.length) { cmd.value = common; lastTab = ""; return; }
+  if (lastTab === typed) {
+    const d = document.createElement("div"); d.className = "ln";
+    d.appendChild(parts(matches.map(m => dim(m + "   "))));
+    out.appendChild(d); scroll();
+  }
+  lastTab = typed;
+}
+cmd.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); submit(cmd.value); }
+  else if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); complete(); }
+});
+// Any key or tap while text is printing skips the typewriter effect.
+addEventListener("keydown", () => { if (!pending) skipping = true; });
+out.addEventListener("click", () => { if (!pending) skipping = true; else cmd.focus({ preventScroll: true }); });
+const ask = (p, choices, extra) => input(p, { choices, ...extra });
+const pressEnter = () => input([dim("[ press ENTER ]")], { choices: [{ label: "continue", value: "" }] });
+const yesNo = async q => (await ask([hi(q + " (y/n) ")], ["y", "n"])).toLowerCase().startsWith("y");
+
+/* ===================================================================
+   Player + saves (browser storage; mirrors state.py)
+   =================================================================== */
+const SAVE_KEY = "netrunner86.saves";
+function loadSaves() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch { return {}; } }
+function newPlayer(handle) {
+  return { handle, credits: 200, rep: 0, modem: 1, cracker: 1, completed_jobs: [], story_chapter: 1,
+           story_scene: 0, flags: {}, board_seed: 1, times_traced: 0, notes: [] };
+}
+function save(p) {
+  try { const all = loadSaves(); all[keyOf(p.handle)] = p; localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch {}
+}
+const keyOf = h => (h.replace(/[^A-Za-z0-9_-]/g, "").toLowerCase() || "player");
+function rank(p) {
+  for (const [t, name] of [[60, "ELITE"], [30, "CRACKER"], [10, "PHREAK"], [0, "SCRIPT KIDDIE"]]) if (p.rep >= t) return name;
+  return "LAMER";
+}
+
+/* ===================================================================
+   Lock minigames (mirrors locks.py). Each returns true on success.
+   =================================================================== */
+const rand = n => Math.floor(Math.random() * n);
+const pick = a => a[rand(a.length)];
+
+async function keypad(security, bonus, addTrace) {
+  const length = 2 + security;
+  let code = ""; for (let i = 0; i < length; i++) code += rand(10);
+  const tries = 7 + bonus;
+  art("LOCK");
+  box([[fg(`NUMERIC KEYLOCK  //  ${length}-digit access code`)],
+       [fg("Feedback:  "), hi("*"), fg(" right digit, right slot   "), hi("+"), fg(" right digit, wrong slot   "), dim("."), fg(" miss")],
+       [fg(`Attempts: ${tries}   (each failure raises the trace)`)]], "CRACK");
+  for (let attempt = 1; attempt <= tries;) {
+    const guess = await ask([hi(`code ${attempt}/${tries}> `)], ["abort"], { numeric: true });
+    if (["q", "quit", "abort"].includes(guess.toLowerCase())) return false;
+    if (guess.length !== length || !/^\d+$/.test(guess)) { say(`  enter exactly ${length} digits`, "dim"); continue; }
+    attempt++;
+    if (guess === code) { say([hi("  " + "*".repeat(length)), fg("  ACCESS GRANTED")]); return true; }
+    say([fg("  "), ...feedback(guess, code)]);
+    if (!addTrace(5)) return false;
+  }
+  say(`  LOCKOUT. The code was ${code}.`, "alert");
+  return false;
+}
+function feedback(guess, code) {
+  const marks = Array(code.length).fill("."), remaining = [];
+  [...guess].forEach((g, i) => { if (g === code[i]) marks[i] = "*"; else remaining.push(code[i]); });
+  [...guess].forEach((g, i) => {
+    const k = remaining.indexOf(g);
+    if (marks[i] === "." && k >= 0) { marks[i] = "+"; remaining.splice(k, 1); }
+  });
+  return marks.map(m => m === "*" ? hi(m) : m === "+" ? fg(m) : dim(m));
+}
+
+async function wordlist(security, bonus, addTrace) {
+  const length = Math.min(7, 4 + security);
+  const words = [...DATA.words[length]].sort(() => Math.random() - .5);
+  const pool = words.slice(0, Math.min(words.length, 6 + security * 2));
+  const answer = pick(pool);
+  const tries = 4 + bonus;
+  const junk = "!@#$%^&*()_+-=[]{};:<>,./?|\\";
+  const grid = document.createElement("div"); grid.className = "dump";
+  for (const w of pool) {
+    let pad = ""; for (let i = 0; i < 14 - w.length; i++) pad += pick(junk);
+    const cut = rand(pad.length + 1);
+    const cell = document.createElement("span");
+    cell.appendChild(parts([fg("0x" + (0xF000 + rand(0x1000)).toString(16).toUpperCase() + " "), dim(pad.slice(0, cut)), hi(w), dim(pad.slice(cut))]));
+    grid.appendChild(cell);
+  }
+  box([grid], "MEMORY DUMP");
+  say(`Password is one of the words above. Likeness = letters in the right position. Attempts: ${tries}`);
+  let used = 0;
+  while (used < tries) {
+    const guess = (await ask([hi(`word ${used + 1}/${tries}> `)], [...pool, "abort"])).toUpperCase();
+    if (["Q", "QUIT", "ABORT"].includes(guess)) return false;
+    if (!pool.includes(guess)) { say("  not in memory dump", "dim"); continue; }
+    used++;
+    if (guess === answer) { say("  >ACCESS GRANTED", "hi"); return true; }
+    const likeness = [...guess].filter((c, i) => c === answer[i]).length;
+    say(`  >ENTRY DENIED   >LIKENESS=${likeness}`);
+    if (!addTrace(8)) return false;
+  }
+  say(`  TERMINAL LOCKED. Password was ${answer}.`, "alert");
+  return false;
+}
+/* Safe dial: crack each tumbler of a combination lock, 00-39, with
+   HIGHER / LOWER clues. More security = more tumblers. */
+async function dial(security, bonus, addTrace) {
+  const tumblers = Math.min(4, 1 + security);
+  const combo = Array.from({ length: tumblers }, () => rand(40));
+  const tries = 6 + bonus;
+  art("LOCK");
+  box([[fg(`COMBINATION DIAL  //  ${tumblers} tumbler${tumblers > 1 ? "s" : ""}, numbers 00-39`)],
+       [fg("Set each tumbler in turn. The lock tells you "), hi("HIGHER"), fg(" or "), hi("LOWER"), fg(".")],
+       [fg(`Attempts per tumbler: ${tries}   (each miss raises the trace)`)]], "DIAL");
+  for (let t = 0; t < tumblers; t++) {
+    let solved = false;
+    for (let attempt = 1; attempt <= tries && !solved;) {
+      const g = await ask([hi(`tumbler ${t + 1}/${tumblers}  try ${attempt}/${tries}> `)], ["abort"], { numeric: true });
+      if (["q", "quit", "abort"].includes(g.toLowerCase())) return false;
+      const n = parseInt(g, 10);
+      if (!/^\d{1,2}$/.test(g) || n > 39) { say("  enter a number from 00 to 39", "dim"); continue; }
+      attempt++;
+      if (n === combo[t]) { say(`  *click*  tumbler ${t + 1} set`, "hi"); solved = true; break; }
+      say(`  ${n < combo[t] ? "HIGHER" : "LOWER"}`);
+      if (!addTrace(3)) return false;
+    }
+    if (!solved) { say(`  The dial jams. Tumbler ${t + 1} was ${String(combo[t]).padStart(2, "0")}.`, "alert"); return false; }
+  }
+  say("  >ALL TUMBLERS SET. ACCESS GRANTED", "hi");
+  return true;
+}
+
+/* Memory sequence: a pattern of A/B/C/D flashes up, then hides; type it
+   back. Each round is longer. More security = more rounds. */
+async function sequence(security, bonus, addTrace) {
+  const rounds = 1 + security;
+  let lives = 1 + bonus;
+  box([[fg(`MEMORY LOCK  //  ${rounds} rounds`)],
+       [fg("A pattern of letters flashes on screen, then vanishes. Type it back, e.g. "), hi("ACDB"), fg(".")],
+       [fg(`Mistakes allowed: ${lives}   (each mistake raises the trace)`)]], "SEQUENCE");
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  for (let r = 1; r <= rounds;) {
+    const len = 3 + r;
+    const seq = Array.from({ length: len }, () => "ABCD"[rand(4)]).join("");
+    const d = line([fg(`  round ${r}/${rounds}:  `), hi(seq.split("").join(" "))]);
+    await wait(900 + 300 * len);
+    d.lastChild.textContent = "# ".repeat(len).trim();
+    const g = (await ask([hi(`pattern ${r}/${rounds}> `)], ["abort"])).toUpperCase().replace(/\s+/g, "");
+    if (["Q", "QUIT", "ABORT"].includes(g)) return false;
+    if (g === seq) { say("  MATCH", "hi"); r++; continue; }
+    say(`  NO MATCH. It was ${seq}.`, "alert");
+    if (!addTrace(6)) return false;
+    if (lives-- <= 0) { say("  LOCKOUT.", "alert"); return false; }
+    say(`  New pattern. Mistakes left: ${lives}`, "dim");
+  }
+  say("  >PATTERN ACCEPTED. ACCESS GRANTED", "hi");
+  return true;
+}
+const LOCKS = { keypad, wordlist, dial, sequence };
+
+/* ===================================================================
+   The hacking shell (mirrors shell.py). One mission = one Session.
+   =================================================================== */
+const HELP = [
+  ["scan", "list reachable hosts"], ["connect <ip>", "dial into a host"],
+  ["crack", "break the host's security lock"], ["login <password>", "log in with a known password"],
+  ["ls", "list files on the host"], ["cat <file>", "read a file"], ["get <file>", "download a file to your rig"],
+  ["put <file>", "upload a file from your rig"], ["rm <file>", "delete a file"], ["dc", "disconnect from the host"],
+  ["brief", "show the job brief and objectives"], ["note <text>", "jot something in your notepad"], ["rig", "show files on your own machine"], ["abort", "walk away from the job"],
+];
+function describe(o, hosts) {
+  const verb = { download: "Download", delete: "Delete", read: "Read", upload: "Upload" }[o.type];
+  const where = o.type === "upload" ? "to" : o.type === "read" ? "on" : "from";
+  return `${verb} ${o.file} ${where} ${hosts[o.host].name} (${o.host})`;
+}
+
+class Session {
+  constructor(player, mission) {
+    this.p = player;
+    this.m = JSON.parse(JSON.stringify(mission));
+    this.hosts = this.m.hosts;
+    this.host = null;
+    this.unlocked = new Set();
+    this.trace = 0;
+    this.rig = Object.fromEntries((this.m.payload || []).map(f => [f, "<payload>"]));
+    this.done = this.m.objectives.map(() => false);
+    this.traceRate = Math.max(1, (this.m.trace_rate || 4) - (player.modem - 1));
+    this.seen = new Set();   // hosts shown on the map
+    Panel.begin(this);
+  }
+  addTrace(n) {
+    const before = this.trace;
+    this.trace = Math.min(100, this.trace + n); Panel.update();
+    if ((before < 70 && this.trace >= 70) || (before < 90 && this.trace >= 90 && this.trace < 100)) CRT.glitch(320);
+    return this.trace < 100;
+  }
+  traceBar() {
+    const f = Math.floor(this.trace / 10);
+    const t = `TRACE[${"#".repeat(f)}${".".repeat(10 - f)}]${String(this.trace).padStart(3)}% `;
+    return this.trace >= 70 ? alert(t) : fg(t);
+  }
+  check(kind, file) {
+    this.m.objectives.forEach((o, i) => {
+      if (!this.done[i] && o.type === kind && o.host === this.host && o.file === file) {
+        this.done[i] = true;
+        say(`  [OBJECTIVE COMPLETE] ${describe(o, this.hosts)}`, "hi");
+        if (this.done.every(Boolean)) say("  >> All objectives done. Disconnect (dc) to cover your tracks and get paid.", "hi");
+      }
+    });
+  }
+  brief() {
+    const rows = [[hi(this.m.title)], `Client: ${this.m.client || "anonymous"}`, ""];
+    for (const para of this.m.brief.split("\n")) rows.push(para);
+    rows.push("", "Objectives:");
+    this.m.objectives.forEach((o, i) => rows.push([this.done[i] ? hi("  [x] ") : fg("  [ ] "), fg(describe(o, this.hosts))]));
+    rows.push("", `Pay: ${this.m.reward || 0} cr   Rep: +${this.m.rep || 0}`);
+    box(rows, "JOB");
+  }
+  suggestions() {
+    if (!this.host) {
+      const c = ["scan", ...Object.keys(this.hosts).map(ip => "connect " + ip), "brief", "help"];
+      return this.done.every(Boolean) ? c : [...c, "abort"];
+    }
+    if (!this.unlocked.has(this.host)) return ["crack", "login ", "dc", "brief"];
+    const files = Object.keys(this.hosts[this.host].files);
+    return ["ls", ...files.map(f => "cat " + f), ...files.map(f => "get " + f), ...files.map(f => "rm " + f),
+            ...Object.keys(this.rig).map(f => "put " + f), "dc"];
+  }
+  async run() {
+    clear(); this.brief();
+    say("Type 'help' for commands, or tap a suggestion below.", "dim");
+    for (;;) {
+      const where = this.host ? this.hosts[this.host].name : "localhost";
+      const sk = document.documentElement.dataset.skin;   // Windows themes get Windows-style prompts
+      const head = sk === "powershell" ? [fg("PS ")] : [], tail = sk === "cmd" || sk === "powershell" ? ">" : "$";
+      const line = await ask([this.traceBar(), ...head, hi(this.p.handle), fg(`@${where}${tail} `)], this.suggestions(),
+                             { complete: [...HELP.map(([c]) => c.split(" ")[0]), "disconnect"] });
+      if (!line) continue;
+      const sp = line.indexOf(" ");
+      const c = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
+      const arg = sp < 0 ? "" : line.slice(sp + 1).trim();
+      const handler = this["do_" + c];
+      if (!handler) { say(`${c}: command not found`, "dim"); continue; }
+      if (this.host && !["help", "brief", "rig", "note"].includes(c) && !this.addTrace(this.traceRate)) return this.busted();
+      const result = await handler.call(this, arg);
+      Panel.update();
+      if (result) return result;
+      if (this.trace >= 100) return this.busted();
+    }
+  }
+  async busted() {
+    CRT.glitch(1000, true);
+    art("SKULL", "alert");
+    await typeOut("Your line has been traced. The feds know where you live.", "alert");
+    return "traced";
+  }
+  connected() { if (!this.host) say("not connected. scan, then connect <ip>", "dim"); return !!this.host; }
+  inside() {
+    if (!this.connected()) return false;
+    if (!this.unlocked.has(this.host)) { say([alert("ACCESS DENIED"), fg(" - crack the lock first")]); return false; }
+    return true;
+  }
+  exists(name) {
+    if (name in this.hosts[this.host].files) return true;
+    say(`no such file: ${name}`, "dim"); return false;
+  }
+  do_help() { for (const [c, d] of HELP) say([hi(c.padEnd(18)), fg(d)]); }
+  do_brief() { this.brief(); }
+  do_rig() { const f = Object.keys(this.rig); say("  " + (f.length ? f.join("  ") : "(empty)"), f.length ? "fg" : "dim"); }
+  async do_abort() { if (await yesNo("Abort the job?")) return "aborted"; }
+  async do_scan() {
+    await progress("Scanning subnet", .8);
+    for (const [ip, h] of Object.entries(this.hosts)) {
+      say([hi("  " + ip.padEnd(16)), fg(h.name.padEnd(22) + "security " + "#".repeat(h.security || 1))]);
+      this.seen.add(ip);
+      Panel.addNote(`${ip}  ${h.name}`, "scan");
+    }
+  }
+  async do_connect(ip) {
+    if (!ip) return say("usage: connect <ip>", "dim");
+    if (!(ip in this.hosts)) return say(`connect: no carrier at ${ip}`, "dim");
+    if (this.host) await this.do_dc();
+    say(`ATDT ${ip} ...`, "dim");
+    await progress("Handshake", .6);
+    this.host = ip;
+    this.seen.add(ip); Panel.update();
+    const h = this.hosts[ip];
+    say(`CONNECTED to ${h.name}`, "hi");
+    if (h.banner) say(h.banner);
+    if (!this.unlocked.has(ip)) say([alert("ACCESS RESTRICTED."), fg(" Use 'crack' or 'login <password>'.")]);
+  }
+  async do_dc() {
+    if (!this.host) return say("not connected", "dim");
+    say(`NO CARRIER (${this.hosts[this.host].name})`, "dim");
+    this.host = null;
+    if (this.done.every(Boolean)) return "success";
+  }
+  do_disconnect() { return this.do_dc(); }
+  do_exit() { return this.do_dc(); }
+  async do_crack() {
+    if (!this.connected()) return;
+    if (this.unlocked.has(this.host)) return say("already in", "dim");
+    const h = this.hosts[this.host];
+    if (await LOCKS[h.lock || "keypad"](h.security || 1, this.p.cracker - 1, n => this.addTrace(n))) {
+      this.unlocked.add(this.host); say(`ROOT ACCESS ON ${h.name}`, "hi");
+    } else if (this.trace < 100) { CRT.glitch(220); say("Crack failed. Try again or find a password.", "dim"); }
+  }
+  do_login(pw) {
+    if (!this.connected()) return;
+    if (pw && pw === this.hosts[this.host].password) { this.unlocked.add(this.host); say("LOGIN OK. Welcome back, operator.", "hi"); }
+    else { CRT.glitch(220); say("LOGIN INCORRECT", "alert"); this.addTrace(5); }
+  }
+  do_ls() {
+    if (!this.inside()) return;
+    const files = Object.entries(this.hosts[this.host].files);
+    if (!files.length) say("  (no files)", "dim");
+    for (const [n, b] of files) say(`  ${n.padEnd(24)}${String(b.length).padStart(6)} bytes`);
+  }
+  do_cat(name) {
+    if (!(this.inside() && this.exists(name))) return;
+    const text = this.hosts[this.host].files[name];
+    box(text.split("\n"), name); this.check("read", name);
+    Panel.harvest(text, name, this.hosts[this.host].name);
+  }
+  async do_get(name) {
+    if (!(this.inside() && this.exists(name))) return;
+    await progress(`Downloading ${name}`, .8);
+    this.rig[name] = this.hosts[this.host].files[name];
+    this.check("download", name);
+  }
+  async do_put(name) {
+    if (!this.inside()) return;
+    if (!(name in this.rig)) return say(`put: ${name} is not on your rig`, "dim");
+    await progress(`Uploading ${name}`, .8);
+    this.hosts[this.host].files[name] = this.rig[name];
+    this.check("upload", name);
+  }
+  do_note(text) {
+    if (!text) return say("usage: note <text>", "dim");
+    Panel.addNote(text, "you"); say("  noted", "dim");
+  }
+  do_rm(name) {
+    if (this.inside() && this.exists(name)) { delete this.hosts[this.host].files[name]; say(`  ${name} deleted`); this.check("delete", name); }
+  }
+}
+
+async function playMission(player, mission) {
+  const outcome = await new Session(player, mission).run();
+  Panel.end(outcome);
+  if (outcome === "success") {
+    player.credits += mission.reward || 0; player.rep += mission.rep || 0;
+    await typeOut(`\nTransfer received: ${mission.reward || 0} credits. Rep +${mission.rep || 0}.`, "hi");
+  } else if (outcome === "traced") {
+    const fine = Math.floor(player.credits / 4);
+    player.credits -= fine; player.rep = Math.max(0, player.rep - 2); player.times_traced++;
+    say(`You burn ${fine} credits on lawyers and a new phone line. Rep -2.`, "alert");
+  } else say("You hang up and walk away. No pay.", "dim");
+  save(player);
+  await pressEnter();
+  return outcome;
+}
+
+/* ===================================================================
+   Story mode (mirrors story.py)
+   =================================================================== */
+const fmt = (t, p) => t.replaceAll("{handle}", p.handle);
+async function playStory(p) {
+  const chapter = DATA.story[p.story_chapter];
+  if (!chapter) {
+    clear();
+    box([`Chapter ${p.story_chapter} is still being written.`, "Hit the Job Board and upgrade your rig in the meantime."], "STORY");
+    return pressEnter();
+  }
+  const scenes = chapter.scenes;
+  if (p.story_scene === 0) {
+    clear(); art("TITLE", "dim");
+    await typeOut(`CHAPTER ${chapter.number}: ${chapter.title}`, "hi", 50);
+    await sleep(800);
+  }
+  while (p.story_scene < scenes.length) {
+    const s = scenes[p.story_scene];
+    const req = s.requires || {};
+    if (Object.entries(req).every(([k, v]) => p.flags[k] === v)) {
+      if ((await runScene(s, p)) === "quit") { save(p); return; }
+    }
+    p.story_scene++; save(p);
+  }
+  p.story_chapter++; p.story_scene = 0; save(p);
+}
+async function runScene(s, p) {
+  if (s.cutscene) { clear(); await Cutscene.play(s.cutscene); }
+  if (s.type === "text") {
+    clear();
+    if (s.art) art(s.art, "dim");
+    if (s.speaker) { say(`<< ${s.speaker} >>`, "hi"); say(); }
+    await typeOut(fmt(s.text, p)); say();
+    const a = await ask([dim("[ ENTER to continue, Q to save & quit ] ")], [{ label: "continue", value: "" }, { label: "save & quit", value: "q" }]);
+    return a.toLowerCase() === "q" ? "quit" : null;
+  }
+  if (s.type === "choice") {
+    say(); say(s.prompt, "hi");
+    s.options.forEach((o, i) => say(`  ${i + 1}) ${o.label}`));
+    let n;
+    for (;;) {
+      const a = await ask([hi("choice> ")], s.options.map((o, i) => ({ label: `${i + 1}) ${o.label}`, value: String(i + 1) })));
+      if (["q", "quit"].includes(a.toLowerCase())) return "quit";
+      n = parseInt(a, 10);
+      if (n >= 1 && n <= s.options.length) break;
+    }
+    const o = s.options[n - 1];
+    if (o.flag) p.flags[o.flag] = true;
+    say(); await typeOut(fmt(o.text, p));
+    await pressEnter();
+    return null;
+  }
+  if (s.type === "mission") {
+    // {handle} can appear anywhere in a mission (brief, banners, file contents).
+    const m = JSON.parse(JSON.stringify(s.mission).replaceAll("{handle}", JSON.stringify(p.handle).slice(1, -1)));
+    for (;;) {
+      if ((await playMission(p, m)) === "success") return null;
+      if (!(await yesNo("Retry the job?"))) return "quit";
+    }
+  }
+  throw new Error("unknown scene type " + s.type);
+}
+
+/* ===================================================================
+   Job board + generator (mirrors board.py)
+   =================================================================== */
+function rng(seed) { // mulberry32
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function generate(seed, rep) {
+  const r = rng(seed), ch = a => a[Math.floor(r() * a.length)], ri = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const tier = Math.min(3, 1 + Math.floor(rep / 12) + ch([0, 0, 1]));
+  const corp = ch(DATA.corps);
+  const tag = corp.split(" ").map(w => w[0]).join("").toUpperCase();
+  const ip = `${ch([10, 172, 192])}.${ri(0, 255)}.${ri(0, 255)}.${ri(1, 254)}`;
+  const name = `${tag}-${ch(["MAIN", "FILES", "DB", "NODE", "VAX"])}`;
+  const loot = ch(DATA.loot), log = ch(DATA.logs);
+  const files = { ...DATA.junk, [loot]: `[${ri(10, 900)} KB of ${corp} data]`, [log]: "CONNECT ... AUTH ... <your fingerprints are here>" };
+  const kind = ch(["steal", "steal_clean", "wipe"]);
+  let objectives, brief;
+  if (kind === "steal") { objectives = [{ type: "download", host: ip, file: loot }]; brief = `I need ${loot} from ${corp}. Get in, get it, get out.`; }
+  else if (kind === "steal_clean") { objectives = [{ type: "download", host: ip, file: loot }, { type: "delete", host: ip, file: log }]; brief = `Pull ${loot} off the ${corp} system and wipe ${log} so nobody knows it walked.`; }
+  else { objectives = [{ type: "delete", host: ip, file: loot }]; brief = `${corp} has something on me in ${loot}. Make it disappear.`; }
+  return {
+    id: `gen_${seed}`, title: `${corp} contract`, client: ch(DATA.handles), brief,
+    reward: 100 * tier + ri(0, 8) * 10 + 40 * (objectives.length - 1), rep: 1 + tier, trace_rate: 2 + tier,
+    objectives, hosts: { [ip]: { name, security: tier, lock: ch(["keypad", "wordlist", "dial", "sequence"]), files } }, generated: true,
+  };
+}
+const stars = j => { const l = Math.max(...Object.values(j.hosts).map(h => h.security || 1)); return "*".repeat(l).padEnd(3); };
+async function openBoard(p) {
+  for (;;) {
+    clear(); art("BOARD", "hi");
+    say(`  ${p.handle}  //  ${rank(p)}  //  ${p.credits} cr  //  rep ${p.rep}`, "dim");
+    const jobs = [...DATA.jobs.filter(j => !p.completed_jobs.includes(j.id)),
+                  ...[0, 1, 2].map(i => generate(p.board_seed * 100 + i, p.rep))];
+    box(jobs.map((j, i) => {
+      const locked = (j.min_rep || 0) > p.rep;
+      const t = `${String(i + 1).padStart(2)}) [${stars(j)}] ${j.title.slice(0, 30).padEnd(30)} ${String(j.reward).padStart(5)} cr  ${j.client}`;
+      return locked ? [dim(t + `  (rep ${j.min_rep})`)] : [fg(t)];
+    }), "CONTRACTS");
+    say("  number = view job   R = refresh the board (-20 cr)   B = back", "dim");
+    const a = (await ask([hi("board> ")], [...jobs.map((j, i) => ({ label: String(i + 1), value: String(i + 1) })), { label: "refresh -20cr", value: "r" }, { label: "back", value: "b" }])).toLowerCase();
+    if (["b", "q", "back", "quit"].includes(a)) return;
+    if (a === "r") { if (p.credits >= 20) { p.credits -= 20; p.board_seed++; save(p); } continue; }
+    const n = parseInt(a, 10);
+    if (!(n >= 1 && n <= jobs.length)) continue;
+    const job = jobs[n - 1];
+    if ((job.min_rep || 0) > p.rep) {
+      say(`  ${job.client} doesn't deal with nobodies. Come back with ${job.min_rep} rep.`, "alert");
+      await pressEnter(); continue;
+    }
+    clear();
+    box([[hi(job.title)], `Client: ${job.client}`, "", ...job.brief.split("\n"), "", `Pay: ${job.reward} cr   Rep: +${job.rep}   Security: ${stars(job)}`], "JOB DETAILS");
+    if (!(await yesNo("Take the job?"))) continue;
+    if ((await playMission(p, job)) === "success") {
+      if (job.generated) p.board_seed++; else p.completed_jobs.push(job.id);
+      save(p);
+    }
+  }
+}
+
+/* ===================================================================
+   Rig shop (mirrors shop.py)
+   =================================================================== */
+async function openShop(p) {
+  const keys = Object.keys(DATA.upgrades);
+  for (;;) {
+    clear();
+    const rows = [`Credits: ${p.credits}`, ""];
+    keys.forEach((k, i) => {
+      const u = DATA.upgrades[k], lvl = p[k];
+      const nxt = lvl - 1 < u.prices.length ? `-> ${u.levels[lvl]} for ${u.prices[lvl - 1]} cr` : "(maxed)";
+      rows.push([fg(`${i + 1}) `), hi(u.name), fg(`: ${u.levels[lvl - 1]}  ${nxt}`)], [dim("   " + u.desc)]);
+    });
+    box(rows, "CRAZY EDDIE'S ELECTRONICS");
+    const a = (await ask([hi("shop (number, B=back)> ")], [...keys.map((k, i) => ({ label: `${i + 1}) ${DATA.upgrades[k].name}`, value: String(i + 1) })), { label: "back", value: "b" }])).toLowerCase();
+    if (["b", "q", "back"].includes(a)) return;
+    const n = parseInt(a, 10);
+    if (!(n >= 1 && n <= keys.length)) continue;
+    const k = keys[n - 1], u = DATA.upgrades[k], lvl = p[k];
+    if (lvl - 1 >= u.prices.length) continue;
+    const price = u.prices[lvl - 1];
+    if (p.credits < price) { say("  Eddie laughs at your wallet.", "alert"); await pressEnter(); continue; }
+    p.credits -= price; p[k] = lvl + 1; save(p);
+    say(`  Installed ${u.levels[lvl]}.`, "hi"); await pressEnter();
+  }
+}
+
+/* ===================================================================
+   Boot, profile, main menu (mirrors main.py)
+   =================================================================== */
+async function boot() {
+  clear();
+  for (const l of ["ACME BIOS v2.11  (C) 1984", "640K RAM OK", "HAYES COMPATIBLE MODEM ... DETECTED", "LOADING NETRUN.EXE"]) {
+    say(l, "dim"); await sleep(250);
+  }
+  await progress("", .6);
+  clear(); art("TITLE", "hi"); CRT.glitch(200);
+  await typeOut("A HACKING ADVENTURE FOR THE 2400 BAUD GENERATION", "dim", 20);
+  say();
+}
+async function pickProfile() {
+  const saves = loadSaves();
+  const names = Object.values(saves).map(p => p.handle);
+  if (names.length) say("Saved handles: " + names.join(", "));
+  say("Pick a hacker handle. It's your name on the boards.", "dim");
+  for (;;) {
+    const h = await ask([hi("ENTER HANDLE> ")], names);
+    if (!h) continue;
+    if (saves[keyOf(h)]) { const p = saves[keyOf(h)]; Panel.setPlayer(p); Desktop.setHandle(p.handle); await typeOut(`Welcome back, ${p.handle}.`, "hi"); return p; }
+    const p = newPlayer(h.toUpperCase().slice(0, 16)); save(p); Panel.setPlayer(p); Desktop.setHandle(p.handle);
+    await typeOut(`New profile created. Stay paranoid, ${p.handle}.`, "hi");
+    return p;
+  }
+}
+async function dossier(p) {
+  clear();
+  box([[fg("Handle:    "), hi(p.handle)], `Rank:      ${rank(p)}`, `Credits:   ${p.credits}`, `Rep:       ${p.rep}`,
+       `Rig:       ${DATA.upgrades.modem.levels[p.modem - 1]} modem, ${DATA.upgrades.cracker.levels[p.cracker - 1]}`,
+       `Story:     Chapter ${p.story_chapter}`, `Jobs done: ${p.completed_jobs.length} contracts   Times traced: ${p.times_traced}`], "DOSSIER");
+  await pressEnter();
+}
+const SKINS = [
+  ["green", "GREEN PHOSPHOR", "the classic 80s monochrome monitor"],
+  ["amber", "AMBER", "warm amber phosphor"],
+  ["ibm", "IBM PC", "DOS greys on a 5151 monitor"],
+  ["linux", "LINUX TTY", "bare console, green bash prompt"],
+  ["parrot", "PARROT OS", "navy and cyan pentest distro"],
+  ["ubuntu", "UBUNTU", "aubergine terminal, green prompt"],
+  ["zx", "ZX SPECTRUM", "48K: black ink on white paper"],
+  ["cmd", "WINDOWS CMD", "Command Prompt, grey on black"],
+  ["powershell", "POWERSHELL", "navy console, yellow input"],
+];
+function applySkin(id) {
+  if (id === "green") delete document.documentElement.dataset.skin; else document.documentElement.dataset.skin = id;
+  try { localStorage.setItem("netrunner86.skin", id); } catch {}
+  Desktop.setSkin(id);
+  // New font, new character width: refit the ASCII art once the font is in.
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => dispatchEvent(new Event("resize")));
+}
+async function themeMenu() {
+  for (;;) {
+    clear();
+    const now = document.documentElement.dataset.skin || "green";
+    box(SKINS.map(([id, name, desc], i) => [hi(`${i + 1}) ${name.padEnd(16)}`), fg(id === now ? "<< active  " : "           "), dim(desc)]), "TERMINAL THEMES");
+    box([[hi("W) WINDOW MODE     "), fg(Desktop.frame === "desktop" ? "DESKTOP  " : "MONITOR  "), dim("game in a window on a themed desktop, or full-screen monitor")],
+         [hi("C) CRT EFFECTS     "), fg(CRT.on ? "ON       " : "OFF      "), dim("curved glass, rolling band, phosphor afterglow")]], "SCREEN");
+    say([fg("Preview: "), hi("ROOT ACCESS GRANTED"), fg(" / "), dim("no carrier"), fg(" / "), alert("TRACE 92%"), fg(" / "), info("10.0.1.20")]);
+    const a = (await ask([hi("theme (number, W=window, C=CRT, B=back)> ")], [...SKINS.map(([id, name], i) => ({ label: name, value: String(i + 1) })),
+      { label: `window: ${Desktop.frame}`, value: "w" }, { label: `CRT effects: ${CRT.on ? "ON" : "OFF"}`, value: "c" }, { label: "back", value: "b" }])).toLowerCase();
+    if (["b", "q", "back", ""].includes(a)) return;
+    if (a === "c") { CRT.setOn(!CRT.on); continue; }
+    if (a === "w") { Desktop.setFrame(Desktop.frame === "desktop" ? "monitor" : "desktop"); continue; }
+    const n = parseInt(a, 10);
+    if (n >= 1 && n <= SKINS.length) applySkin(SKINS[n - 1][0]);
+  }
+}
+async function musicMenu() {
+  for (;;) {
+    clear(); art("CASSETTE", "hi");
+    box(Music.tracks.map((t, i) => [hi(`${i + 1}) ${t.name.padEnd(16)}`), fg(i === Music.track ? (Music.muted ? "<< paused   " : "<< playing  ") : "            "), dim(`${t.bpm} bpm, ${t.mood}`)]), "SIDE A");
+    say(`Music is ${Music.muted ? "OFF" : "ON"}. Pick a track, M to toggle music, B to go back. The >> button next to MUSIC skips tracks at any time.`, "dim");
+    const a = (await ask([hi("tape deck> ")], [...Music.tracks.map((t, i) => ({ label: t.name, value: String(i + 1) })), { label: Music.muted ? "music on" : "music off", value: "m" }, { label: "back", value: "b" }])).toLowerCase();
+    if (["b", "q", "back", ""].includes(a)) return;
+    if (a === "m") { Music.setMuted(!Music.muted); continue; }
+    const n = parseInt(a, 10);
+    if (n >= 1 && n <= Music.tracks.length) Music.setTrack(n - 1);
+  }
+}
+async function mainMenu(p) {
+  const opts = [["S", "Story mode", () => playStory(p)], ["J", "Job board (open world)", () => openBoard(p)],
+                ["R", "Rig upgrades", () => openShop(p)], ["D", "Dossier", () => dossier(p)],
+                ["T", "Themes & screen", () => themeMenu()], ["M", "Music player", () => musicMenu()], ["N", "News feed (RSS window)", async () => RSS.toggle()], ["Q", "Log off", null]];
+  for (;;) {
+    clear(); art("TITLE", "hi");
+    say(`  ${p.handle} // ${rank(p)} // ${p.credits} cr // rep ${p.rep}`, "dim");
+    box(opts.map(([k, l]) => [hi(k), fg(") " + l)]), "MAIN MENU");
+    const a = (await ask([hi("> ")], opts.map(([k, l]) => ({ label: `${k}) ${l.split(" (")[0]}`, value: k })))).toUpperCase();
+    if (a === "Q" || a === "QUIT") { save(p); say("NO CARRIER", "dim"); await sleep(700); await CRT.powerOff(); return; }
+    const o = opts.find(([k, , f]) => k === a && f);
+    if (o) await o[2]();
+  }
+}
+// Browsers only allow sound after a key press or tap, so the game opens on a
+// power-on screen; that press starts the theme tune and the boot sequence.
+function powerOn() {
+  out.innerHTML = ""; CRT.standby(); art("TERMINAL", "dim"); say();
+  const d = line([hi("PRESS ANY KEY OR TAP THE SCREEN TO POWER ON ")]);
+  const c = document.createElement("span"); c.className = "cursor"; c.innerHTML = "&nbsp;"; d.appendChild(c);
+  return new Promise(resolve => {
+    const go = e => {
+      if (e.target && e.target.closest && e.target.closest(".tabbar")) return;
+      removeEventListener("pointerdown", go); removeEventListener("keydown", go);
+      e.preventDefault();
+      Music.play(); CRT.powerOn(); cmd.value = ""; skipping = false;
+      setTimeout(resolve, 0);
+    };
+    addEventListener("pointerdown", go); addEventListener("keydown", go);
+  });
+}
+async function start() {
+  try {
+    const skin = localStorage.getItem("netrunner86.skin") || (localStorage.getItem("netrunner86.amber") ? "amber" : "");
+    if (skin && SKINS.some(([id]) => id === skin)) applySkin(skin);
+  } catch {}
+  await powerOn();
+  for (;;) { await boot(); const p = await pickProfile(); await sleep(600); await mainMenu(p); await sleep(900); await powerOn(); }
+}
+/* ===================================================================
+   Music: original chiptune tracks synthesised live with Web Audio (no
+   audio files). Each track is plain data below; add one to TRACKS and it
+   shows up in the music player. Browsers only allow sound after the player
+   interacts, so it starts at the power-on screen. Choices are remembered.
+   =================================================================== */
+const Music = (() => {
+  const NOTE = { C: 0, "C#": 1, D: 2, "D#": 3, E: 4, F: 5, "F#": 6, G: 7, "G#": 8, A: 9, "A#": 10, B: 11 };
+  const hz = n => { const [, l, o] = n.match(/^([A-G]#?)(\d)$/); return 440 * 2 ** ((NOTE[l] + (+o + 1) * 12 - 69) / 12); };
+  // Lead bars are [note, length in 16ths]; "." is a rest.
+  const bars = list => list.map(bar => { const m = {}; let s = 0; for (const [n, l] of bar) { if (n !== ".") m[s] = [n, l]; s += l; } return m; });
+  const DRUMS = {
+    rock:  { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], hatVol: 0.08 },
+    four:  { kick: [0, 4, 8, 12], snare: [4, 12], hat: [2, 6, 10, 14], hatVol: 0.14 },
+    half:  { kick: [0, 10], snare: [8], hat: [0, 4, 8, 12], hatVol: 0.05 },
+    tense: { kick: [0, 3, 6, 8, 11, 14], snare: [12], hat: [...Array(16).keys()], hatVol: 0.04 },
+  };
+  const Am = ["A2", "A3", "C4", "E4"], F = ["F2", "F3", "A3", "C4"], C = ["C3", "G3", "C4", "E4"], G = ["G2", "G3", "B3", "D4"];
+  const TRACKS = [
+    {
+      name: "CARRIER DETECT", mood: "the theme", bpm: 112, bass: "octave", drums: "rock",
+      arp: [1, 2, 3, 2], arpWave: "square", lead: "sawtooth", leadVol: 0.09, leadFrom: 1,
+      chords: [Am, F, C, G, Am, F, G, ["E2", "E3", "G#3", "B3"]],
+      melody: bars([
+        [["A4", 4], ["C5", 2], ["E5", 2], ["D5", 4], ["C5", 4]],
+        [["A4", 4], ["C5", 2], ["F5", 2], ["E5", 6], [".", 2]],
+        [["G4", 4], ["C5", 2], ["E5", 2], ["G5", 4], ["E5", 4]],
+        [["D5", 6], ["B4", 2], ["D5", 4], ["G4", 4]],
+        [["A5", 4], ["G5", 2], ["E5", 2], ["C5", 4], ["E5", 4]],
+        [["F5", 4], ["E5", 2], ["C5", 2], ["A4", 8]],
+        [["B4", 4], ["D5", 2], ["G5", 2], ["F5", 4], ["D5", 4]],
+        [["E5", 4], ["G#5", 4], ["B5", 4], ["E5", 4]],
+      ]),
+    },
+    {
+      name: "ICE BREAKER", mood: "fast and driving", bpm: 140, bass: "pulse", drums: "four",
+      arp: [1, 2, 3, 2, 1, 3, 2, 3], arpWave: "square", lead: "square", leadVol: 0.07, leadFrom: 0,
+      chords: [["E2", "E3", "G3", "B3"], ["C2", "C3", "E3", "G3"], ["D2", "D3", "F#3", "A3"], ["B1", "B2", "D#3", "F#3"],
+               ["E2", "E3", "G3", "B3"], ["C2", "C3", "E3", "G3"], ["A1", "A2", "C3", "E3"], ["B1", "B2", "D#3", "F#3"]],
+      melody: bars([
+        [["B4", 4], ["E5", 2], ["G5", 2], ["F#5", 2], ["E5", 2], ["D5", 2], ["E5", 2]],
+        [["G5", 4], ["E5", 4], ["C5", 4], ["E5", 4]],
+        [["F#5", 4], ["A5", 2], ["F#5", 2], ["D5", 4], ["A4", 4]],
+        [["B4", 2], ["D#5", 2], ["F#5", 2], ["B5", 2], ["A5", 4], ["F#5", 4]],
+        [["E5", 2], ["G5", 2], ["B5", 4], ["A5", 2], ["G5", 2], ["F#5", 4]],
+        [["E5", 4], ["G5", 2], ["E5", 2], ["C5", 8]],
+        [["A4", 2], ["C5", 2], ["E5", 2], ["A5", 2], ["G5", 4], ["E5", 4]],
+        [["D#5", 4], ["F#5", 4], ["B4", 8]],
+      ]),
+    },
+    {
+      name: "MIDNIGHT BBS", mood: "slow and moody", bpm: 84, bass: "long", drums: "half", arpEvery: 2,
+      arp: [1, 2, 3, 2], arpWave: "triangle", lead: "triangle", leadVol: 0.16, leadFrom: 1,
+      chords: [["D2", "D3", "F3", "A3"], ["A#1", "A#2", "D3", "F3"], ["F2", "F3", "A3", "C4"], ["C2", "C3", "E3", "G3"],
+               ["D2", "D3", "F3", "A3"], ["A#1", "A#2", "D3", "F3"], ["G1", "G2", "A#2", "D3"], ["A1", "A2", "C#3", "E3"]],
+      melody: bars([
+        [["A4", 6], ["F4", 2], ["D5", 8]],
+        [["D5", 4], ["C5", 4], ["A#4", 8]],
+        [["A4", 6], ["C5", 2], ["F5", 8]],
+        [["E5", 4], ["D5", 4], ["C5", 4], ["G4", 4]],
+        [["F5", 6], ["E5", 2], ["D5", 8]],
+        [["F5", 4], ["D5", 4], ["A#4", 8]],
+        [["G4", 4], ["A#4", 4], ["D5", 4], ["C5", 4]],
+        [["C#5", 8], ["E5", 4], ["A4", 4]],
+      ]),
+    },
+    {
+      name: "TRACE ALERT", mood: "tense chase", bpm: 128, bass: "pulse", drums: "tense",
+      arp: [1, 3, 2, 3], arpWave: "sawtooth", lead: "square", leadVol: 0.07, leadFrom: 1,
+      chords: [["C2", "C3", "D#3", "G3"], ["C2", "C3", "D#3", "G3"], ["G#1", "G#2", "C3", "D#3"], ["G1", "G2", "B2", "D3"],
+               ["C2", "C3", "D#3", "G3"], ["C2", "C3", "D#3", "G3"], ["C#2", "C#3", "F3", "G#3"], ["G1", "G2", "B2", "D3"]],
+      melody: bars([
+        [["C5", 2], [".", 2], ["C5", 2], ["D#5", 2], ["G5", 4], ["F5", 2], ["D#5", 2]],
+        [["D5", 2], [".", 2], ["D5", 2], ["D#5", 2], ["D5", 4], ["C5", 4]],
+        [["C5", 2], ["D#5", 2], ["G#5", 4], ["G5", 4], ["D#5", 4]],
+        [["D5", 4], ["B4", 4], ["G4", 4], ["B4", 4]],
+        [["C5", 2], [".", 2], ["C5", 2], ["D#5", 2], ["G5", 4], ["F5", 2], ["D#5", 2]],
+        [["G5", 2], [".", 2], ["G5", 2], ["G#5", 2], ["G5", 4], ["D#5", 4]],
+        [["F5", 4], ["G#5", 4], ["C#6", 4], ["C6", 4]],
+        [["B5", 4], ["G5", 4], ["D5", 4], ["B4", 4]],
+      ]),
+    },
+  ];
+
+  let ctx = null, master, echo, delay, noise, step = 0, next = 0, track = 0, muted = false;
+  try { muted = localStorage.getItem("netrunner86.muted") === "1"; } catch {}
+  try { const t = +localStorage.getItem("netrunner86.track"); if (t >= 0 && t < TRACKS.length) track = t; } catch {}
+  const stepLen = () => 60 / TRACKS[track].bpm / 4;   // one 16th note
+
+  function voice(type, freq, t, dur, vol, dest = master, cutoff) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(vol * 0.5, t + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let node = o;
+    if (cutoff) { const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = cutoff; o.connect(f); node = f; }
+    node.connect(g); g.connect(dest);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function hit(t, dur, vol, filterType, freq) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = filterType; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(master);
+    s.start(t); s.stop(t + dur);
+  }
+  function kick(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.2);
+  }
+  function playStep(i, t) {
+    const tr = TRACKS[track], STEP = stepLen(), loopLen = 16 * tr.chords.length;
+    const loop = Math.floor(i / loopLen), bar = Math.floor(i / 16) % tr.chords.length, s = i % 16, chord = tr.chords[bar];
+    const root = hz(chord[0]);
+    if (tr.bass === "octave" && s % 2 === 0) voice("triangle", root * (s % 4 === 2 ? 2 : 1), t, STEP * 1.8, 0.35);
+    if (tr.bass === "pulse") voice("triangle", root, t, STEP * 0.9, 0.32);
+    if (tr.bass === "long" && s % 8 === 0) voice("triangle", root, t, STEP * 7.5, 0.4);
+    const every = tr.arpEvery || 1;
+    if (s % every === 0) voice(tr.arpWave, hz(chord[tr.arp[(s / every) % tr.arp.length]]) * 2, t, STEP * every * 0.9, 0.035, echo, 2400);
+    const d = DRUMS[tr.drums];
+    if (d.kick.includes(s)) kick(t);
+    if (d.snare.includes(s)) hit(t, 0.14, 0.35, "bandpass", 1800);
+    if (d.hat.includes(s)) hit(t, 0.04, d.hatVol, "highpass", 7000);
+    const n = loop >= tr.leadFrom && tr.melody[bar][s];
+    if (n) voice(tr.lead, hz(n[0]), t, STEP * n[1] * 0.95, tr.leadVol, echo, 3200);
+  }
+  function tick() {
+    while (next < ctx.currentTime + 0.12) { playStep(step++, next); next += stepLen(); }
+  }
+  function boot() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.22; master.connect(ctx.destination);
+    // Echo bus: feedback delay for that synthwave space.
+    echo = ctx.createGain();
+    delay = ctx.createDelay();
+    const fb = ctx.createGain(), wet = ctx.createGain();
+    delay.delayTime.value = stepLen() * 3; fb.gain.value = 0.35; wet.gain.value = 0.4;
+    echo.connect(master); echo.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(master);
+    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const data = noise.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    next = ctx.currentTime + 0.1;
+    setInterval(tick, 25);
+  }
+  // Sound effects for cutscenes and the CRT. Silent while the music is off.
+  function sfx(kind, arg) {
+    if (muted || !ctx || skipping) return;
+    const t = ctx.currentTime + 0.01;
+    const tone = (f, at, dur, vol, type = "sine") => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, at);
+      g.gain.setValueAtTime(vol, at); g.gain.setValueAtTime(vol, at + dur * .8); g.gain.linearRampToValueAtTime(0.0001, at + dur);
+      o.connect(g); g.connect(master); o.start(at); o.stop(at + dur + 0.02);
+      return o;
+    };
+    if (kind === "dtmf") {   // touch-tone keypad: two tones per key
+      const k = "123456789*0#".indexOf(arg); if (k < 0) return;
+      tone([697, 770, 852, 941][Math.floor(k / 3)], t, .09, .22); tone([1209, 1336, 1477][k % 3], t, .09, .22);
+    } else if (kind === "dialtone") { tone(350, t, arg, .16); tone(440, t, arg, .16); }
+    else if (kind === "ringback") { tone(440, t, 1.2, .12); tone(480, t, 1.2, .12); }
+    else if (kind === "ring") { for (let i = 0; i < 18; i++) tone(i % 2 ? 1150 : 920, t + i * .05, .05, .07, "square"); }
+    else if (kind === "click") hit(t, .03, .5, "highpass", 2000);
+    else if (kind === "carrier") {   // the modem squeal
+      tone(2100, t, .5, .12);
+      for (let i = 0; i < 30; i++) tone([980, 1180, 1650, 1850, 2400, 1200][i % 6] + Math.random() * 80, t + .55 + i * .045, .045, .07, i % 3 ? "square" : "sawtooth");
+      hit(t + .55, 1, .1, "bandpass", 1800);
+    } else if (kind === "on") {      // the thunk of the tube warming up
+      const o = tone(55, t, .5, .5, "triangle"); o.frequency.exponentialRampToValueAtTime(30, t + .5);
+      hit(t, .25, .3, "lowpass", 900);
+    } else if (kind === "off") { const o = tone(900, t, .5, .12, "sine"); o.frequency.exponentialRampToValueAtTime(40, t + .5); }
+    else if (kind === "glitch") hit(t, .12, .22, "bandpass", 3000);
+    else if (kind === "glitch-hard") hit(t, .5, .4, "bandpass", 1400);
+  }
+  function play() { if (muted) return; boot(); if (ctx && ctx.state !== "running") ctx.resume().catch(() => {}); }
+  function setMuted(m) {
+    muted = m;
+    try { localStorage.setItem("netrunner86.muted", m ? "1" : "0"); } catch {}
+    if (m) { if (ctx) ctx.suspend().catch(() => {}); } else play();
+    render();
+  }
+  function setTrack(i) {
+    track = (i + TRACKS.length) % TRACKS.length; step = 0;
+    try { localStorage.setItem("netrunner86.track", String(track)); } catch {}
+    if (ctx) { next = ctx.currentTime + 0.05; delay.delayTime.setValueAtTime(stepLen() * 3, ctx.currentTime); }
+    if (muted) setMuted(false); else play();
+    render();
+  }
+  const btn = document.getElementById("mute"), skip = document.getElementById("next-track");
+  function render() {
+    btn.textContent = muted ? "MUSIC: OFF" : "MUSIC: ON";
+    btn.setAttribute("aria-pressed", String(!muted));
+    skip.title = `Next track (now playing: ${TRACKS[track].name})`;
+  }
+  btn.addEventListener("click", e => { e.stopPropagation(); setMuted(!muted); cmd.focus({ preventScroll: true }); });
+  skip.addEventListener("click", e => { e.stopPropagation(); setTrack(track + 1); cmd.focus({ preventScroll: true }); });
+  play(); // try right away: some browsers allow it; otherwise it waits for power-on
+  document.addEventListener("visibilitychange", () => {
+    if (!ctx || muted) return;
+    document.hidden ? ctx.suspend().catch(() => {}) : ctx.resume().catch(() => {});
+  });
+  render();
+  return {
+    play, setMuted, setTrack, sfx, tracks: TRACKS,
+    get track() { return track; }, get muted() { return muted; },
+    get playing() { return !!ctx && ctx.state === "running"; },
+  };
+})();
+
+/* ===================================================================
+   Side panel: MAP (live network diagram), TRACE (radar), NOTES (intel
+   collected automatically from scans and files, plus your own notes).
+   The Session calls Panel.begin / update / end; everything else is local.
+   =================================================================== */
+const Panel = (() => {
+  const el = id => document.getElementById(id);
+  const tabs = [...document.querySelectorAll("#panel [data-tab]")];
+  const mapPre = el("map"), notesList = el("notes"), canvas = el("radar"), readout = el("readout");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let session = null, player = null, current = "map", frame = 0, sweep = 0, blipAngle = 2.2, lastT = 0;
+  let unseenNotes = 0, lastOutcome = null;
+
+  function show(name) {
+    current = name;
+    for (const t of tabs) t.setAttribute("aria-selected", String(t.dataset.tab === name));
+    for (const p of document.querySelectorAll("#panel .pane")) p.hidden = p.id !== "pane-" + name;
+    if (name === "notes") unseenNotes = 0;
+    render();
+    try { localStorage.setItem("netrunner86.tab", name); } catch {}
+  }
+  tabs.forEach(t => t.addEventListener("click", e => { e.stopPropagation(); show(t.dataset.tab); cmd.focus({ preventScroll: true }); }));
+  el("panel-toggle").addEventListener("click", e => {
+    e.stopPropagation();
+    const p = el("panel"); p.classList.toggle("collapsed");
+    e.currentTarget.textContent = p.classList.contains("collapsed") ? "SHOW" : "HIDE";
+    cmd.focus({ preventScroll: true });
+  });
+
+  // ---- tab labels carry live state -----------------------------------
+  function labels() {
+    const tr = session ? session.trace : 0;
+    tabs[1].textContent = session ? `TRACE ${tr}%` : "TRACE";
+    tabs[1].classList.toggle("hot", tr >= 70);
+    tabs[2].textContent = unseenNotes ? `NOTES +${unseenNotes}` : "NOTES";
+  }
+
+  // ---- MAP --------------------------------------------------------------
+  function drawMap() {
+    if (!session) {
+      mapPre.textContent = lastOutcome
+        ? `\n  [ YOUR RIG ]\n\n  ${lastOutcome}\n\n  Take a job to see\n  its network here.`
+        : "\n  [ YOUR RIG ]\n      |\n      +- - - ?\n\n  No active job.\n  Take a contract from\n  the job board or play\n  story mode.";
+      return;
+    }
+    const s = session, ips = Object.keys(s.hosts).filter(ip => s.seen.has(ip));
+    const lines = ["", " [ YOUR RIG ]  " + s.p.handle.slice(0, 12)];
+    if (!ips.length) lines.push("      |", "      +- - - ?", "", " Network unmapped.", " Run 'scan'.");
+    ips.forEach((ip, i) => {
+      const h = s.hosts[ip], last = i === ips.length - 1, live = s.host === ip;
+      const root = s.unlocked.has(ip);
+      // Packets crawl along the live link.
+      let link = live ? "-----" : "     ";
+      if (live) { const k = frame % 5; link = link.slice(0, k) + ">" + link.slice(k + 1); }
+      lines.push("      |");
+      lines.push(`      ${last ? "`" : "+"}${live ? "=" : "-"}${link}${live ? "@" : root ? "*" : "o"} ${h.name}`);
+      const state = live ? (root ? "CONNECTED  ROOT" : "CONNECTED  LOCKED") : root ? "ROOT" : "LOCKED";
+      lines.push(`      ${last ? " " : "|"}        ${ip}`);
+      lines.push(`      ${last ? " " : "|"}        sec ${"#".repeat(h.security || 1).padEnd(3)} ${state}`);
+    });
+    const done = s.done.filter(Boolean).length;
+    lines.push("", ` OBJECTIVES ${done}/${s.done.length}  ` + "[" + s.done.map(d => d ? "x" : " ").join("][") + "]");
+    lines.push("", " @ live link  * root  o locked");
+    mapPre.textContent = lines.join("\n");
+  }
+
+  // ---- TRACE radar -----------------------------------------------------
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function drawRadar(dt) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    const dpr = devicePixelRatio || 1;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+    const g = canvas.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const trace = session ? session.trace : 0;
+    const col = trace >= 70 ? css("--alert") : css("--phosphor");
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 8;
+    sweep = (sweep + dt * (1.2 + trace / 25)) % (Math.PI * 2);
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1;
+    g.globalAlpha = .35;
+    for (const r of [R, R * .66, R * .33]) { g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke(); }
+    g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+    // Sweep with a fading trail.
+    for (let i = 0; i < 24; i++) {
+      g.globalAlpha = .5 * (1 - i / 24);
+      const a = sweep - i * .03;
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); g.stroke();
+    }
+    // You are the centre; the sysop's trace is the blip closing in.
+    g.globalAlpha = 1;
+    g.beginPath(); g.arc(cx, cy, 3, 0, Math.PI * 2); g.fill();
+    if (session && trace > 0) {
+      const dist = R * (1 - trace / 100) + 4;
+      const bx = cx + Math.cos(blipAngle) * dist, by = cy + Math.sin(blipAngle) * dist;
+      const behind = ((sweep - blipAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      g.globalAlpha = Math.max(.25, 1 - behind / 3);
+      g.beginPath(); g.arc(bx, by, 4, 0, Math.PI * 2); g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+  function radarText() {
+    if (!session) { readout.textContent = "LINE CLEAN. NO TRACE."; readout.className = "readout"; return; }
+    const t = session.trace;
+    const level = t >= 90 ? "LOCKING ON" : t >= 70 ? "HIGH" : t >= 40 ? "MEDIUM" : t > 0 ? "LOW" : "NONE";
+    readout.textContent = `TRACE ${String(t).padStart(3)}%   SYSOP ACTIVITY: ${level}`;
+    readout.className = "readout" + (t >= 70 ? " hot" : "");
+  }
+
+  // ---- NOTES -------------------------------------------------------------
+  function notes() { return player ? (player.notes ||= []) : []; }
+  function addNote(text, source) {
+    if (!player) return;
+    const list = notes();
+    if (list.some(n => n.text === text)) return;
+    list.unshift({ text, source });
+    list.length = Math.min(list.length, 60);
+    if (current !== "notes") unseenNotes++;
+    save(player); render();
+  }
+  function drawNotes() {
+    notesList.innerHTML = "";
+    const list = notes();
+    if (!list.length) {
+      const li = document.createElement("li"); li.className = "dim";
+      li.textContent = "Nothing yet. Hosts you scan and passwords you find in files land here. Type 'note <text>' during a job to add your own.";
+      notesList.appendChild(li);
+    }
+    for (const n of list) {
+      const li = document.createElement("li");
+      const t = document.createElement("span"); t.className = "hi"; t.textContent = n.text;
+      const s = document.createElement("span"); s.className = "dim"; s.textContent = n.source ? "  " + n.source : "";
+      li.append(t, s); notesList.appendChild(li);
+    }
+  }
+  // Pull likely passwords ('quoted words') and IP addresses out of a file.
+  function harvest(text, file, hostName) {
+    for (const m of text.matchAll(/'([A-Za-z0-9_.!-]{3,24})'/g)) addNote(`password? ${m[1]}`, `${file} @ ${hostName}`);
+    for (const m of text.matchAll(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/g)) addNote(`ip ${m[1]}`, `${file} @ ${hostName}`);
+  }
+
+  // ---- loop --------------------------------------------------------------
+  function render() {
+    labels();
+    if (current === "map") drawMap();
+    else if (current === "trace") { drawRadar(0); radarText(); }
+    else drawNotes();
+  }
+  function loop(t) {
+    const dt = Math.min(.1, (t - lastT) / 1000 || 0); lastT = t;
+    if (!document.hidden) {
+      if (current === "trace") drawRadar(dt);
+      if (current === "map" && session && session.host && Math.floor(t / 160) !== frame) { frame = Math.floor(t / 160); drawMap(); }
+    }
+    requestAnimationFrame(loop);
+  }
+  addEventListener("resize", render);
+  try { const t = localStorage.getItem("netrunner86.tab"); if (["map", "trace", "notes"].includes(t)) current = t; } catch {}
+  show(current);
+  if (!reduce) requestAnimationFrame(loop);
+
+  return {
+    setPlayer(p) { player = p; unseenNotes = 0; render(); },
+    begin(s) { session = s; lastOutcome = null; blipAngle = Math.random() * Math.PI * 2; render(); },
+    update() { if (session) { render(); } },
+    end(outcome) {
+      lastOutcome = { success: "Job done. Line closed.", traced: "TRACED. Line burned.", aborted: "Job abandoned." }[outcome] || null;
+      session = null; render();
+    },
+    addNote, harvest,
+  };
+})();
+
+/* Tap buttons under the prompt: on/off, remembered between visits. */
+(() => {
+  const b = document.getElementById("chips-toggle");
+  let on = true;
+  try { on = localStorage.getItem("netrunner86.chips") !== "0"; } catch {}
+  const apply = () => {
+    chipsEl.classList.toggle("off", !on);
+    b.textContent = on ? "BUTTONS: ON" : "BUTTONS: OFF";
+    b.setAttribute("aria-pressed", String(on));
+    scroll();
+  };
+  b.addEventListener("click", e => {
+    e.stopPropagation(); on = !on;
+    try { localStorage.setItem("netrunner86.chips", on ? "1" : "0"); } catch {}
+    apply(); cmd.focus({ preventScroll: true });
+  });
+  apply();
+})();
+
+/* ===================================================================
+   News feed window (RSS/Atom): a draggable, resizable window with a feed
+   picker. FEEDS lists the built-in choices; players can add their own URL.
+   Online (claude.ai blocks outside connections) the built-in feeds come
+   from the artifact's database: a scheduled job runs tools/fetch_feeds.py
+   and stores each feed as feeds/<id>. The downloaded file fetches straight
+   from the site, then through a public CORS relay. NEWSWIRE is an in-game
+   1986 feed that always works, even offline.
+   =================================================================== */
+const RSS = (() => {
+  const FEEDS = [
+    { id: "wire", name: "NETRUNNER NEWSWIRE (1986)", builtin: true },
+    { id: "hn", name: "Hacker News: front page", url: "https://hnrss.org/frontpage" },
+    { id: "hackaday", name: "Hackaday", url: "https://hackaday.com/blog/feed/" },
+    { id: "retro", name: "r/retrocomputing", url: "https://www.reddit.com/r/retrocomputing/.rss" },
+    { id: "krebs", name: "Krebs on Security", url: "https://krebsonsecurity.com/feed/" },
+    { id: "reg", name: "The Register: security", url: "https://www.theregister.com/security/headlines.atom" },
+    { id: "ars", name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index" },
+    { id: "lobsters", name: "Lobsters", url: "https://lobste.rs/rss" },
+  ];
+  // Public CORS relays for the downloaded file. Each one is flaky on its own,
+  // so they race and the first good answer wins. rss2json answers in JSON.
+  const RELAYS = [
+    u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+    u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
+    u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
+    u => "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(u),
+  ];
+  // Headlines saved when the file was built (web/feeds_snapshot.json), shown
+  // when no live route gets through.
+  const SNAPSHOT = {"hn": {"name": "Hacker News: front page", "fetchedAt": 1791744522211, "items": [{"title": "Anthropic is out with new nonsense about Claude", "link": "https://dair-community.social/@emilymbender/117412868905734653", "when": 1791742614000}, {"title": "Total Annihilation, rebuilt for modern computers", "link": "https://nanolathe.gg", "when": 1791741887000}, {"title": "NYC's \"Click to Cancel\" rule is now in effect", "link": "https://www.nyc.gov/main/click-to-cancel", "when": 1791741676000}, {"title": "We're unlocking the biggest mysteries of the clitoris", "link": "https://www.sciencefocus.com/the-human-body/were-finally-unlocking-the-biggest-mysteries-of-the-clitoris-2", "when": 1791741373000}, {"title": "YouTuber builds 'Flock-like' camera to track police vehicles, gets police visit", "link": "https://www.tomshardware.com/tech-industry/cyber-security/canadian-youtuber-builds-flock-like-camera-to-exclusively-track-police-vehicles-officers-visit-his-home-to-express-privacy-concerns", "when": 1791740442000}, {"title": "apsw: Another Python SQLite Wrapper", "link": "https://github.com/rogerbinns/apsw", "when": 1791737902000}, {"title": "Playgrnd \u2013 tiny tools for making weird, beautiful things", "link": "https://www.playgrnd.tools/", "when": 1791736297000}, {"title": "How to Build Wealth as a Career Person", "link": "https://asheradeniyi.com/2026/04/10/how-to-build-wealth-as-a-career-person/", "when": 1791734638000}, {"title": "How I reverse engineered a commercial spatial audio effect", "link": "http://epestr.com/blog/reverse-engineering-a-commercial-spatial-audio-effect/", "when": 1791732118000}, {"title": "I'm sorry, but you still have to think", "link": "https://itsallaboutthebit.com/i-am-sorry-but-you-still-have-to-think/", "when": 1791728947000}, {"title": "Documents add to evidence in climate deception case against ExxonMobil", "link": "https://insideclimatenews.org/news/07102026/exxonmobil-climate-deception-new-evidence/", "when": 1791728919000}, {"title": "Terence Tao: Math 2.0 [pdf]", "link": "https://teorth.github.io/tao-web/slides/math-2-0-caltech-2026.pdf", "when": 1791724605000}, {"title": "The tilde in your PATH may not be your HOME", "link": "https://disconnect3d.pl//2026/10/02/dont-put-tilde-in-your-path/", "when": 1791720793000}, {"title": "Valen's Memory Safety: A New Kind of Borrow Checking", "link": "https://verdagon.dev/blog/valen-group-borrowing", "when": 1791720382000}, {"title": "Show HN: BetterWispr \u2013 Free, open-source dictation for Mac", "link": "https://betterwispr.com/", "when": 1791720088000}, {"title": "Weave (YC W25) is hiring ML, AI, product, & design engineers", "link": "https://jobs.ashbyhq.com/weave-os", "when": 1791720068000}, {"title": "I paid people to try and follow my README", "link": "https://shkspr.mobi/blog/2026/10/i-paid-people-to-try-and-follow-my-readme/", "when": 1791719249000}, {"title": "Nitter: Update Oct 10th seeking funding and legal help", "link": "https://nitter.net", "when": 1791715075000}, {"title": "Bot traffic from Yandex", "link": "https://radar.cloudflare.com/bots/as13238?dateRange=7d", "when": 1791714473000}, {"title": "IRCv3", "link": "https://ircv3.net/", "when": 1791713487000}]}, "hackaday": {"name": "Hackaday", "fetchedAt": 1791744522392, "items": [{"title": "Thorium Clocks Start Ticking with Lasers", "link": "https://hackaday.com/2026/10/11/thorium-clocks-start-ticking-with-lasers/", "when": 1791738052000}, {"title": "Inside a Mystery 1980s Filter IC Featuring Switched Capacitors", "link": "https://hackaday.com/2026/10/11/inside-a-mystery-1980s-filter-ic-featuring-switched-capacitors/", "when": 1791727245000}, {"title": "Improving an Autorouter with a Hexagonal Grid", "link": "https://hackaday.com/2026/10/11/improving-an-autorouter-with-a-hexagonal-grid/", "when": 1791716424000}, {"title": "Mars Pathfinder: What Really Happened?", "link": "https://hackaday.com/2026/10/11/mars-pathfinder-what-really-happened/", "when": 1791705604000}, {"title": "Slim Type for Small Screens, with PixelFonts", "link": "https://hackaday.com/2026/10/10/slim-type-for-small-screens-with-pixelfonts/", "when": 1791694855000}, {"title": "Unique Archeological Discovery Sheds Light on Neanderthal Wooden Tool Usage", "link": "https://hackaday.com/2026/10/10/unique-archeological-discovery-sheds-light-on-neanderthal-wooden-tool-usage/", "when": 1791684046000}, {"title": "Poking at the Radxa Dragon Q8B Raspberry Pi 5 Killer", "link": "https://hackaday.com/2026/10/10/poking-at-the-radxa-dragon-q8b-raspberry-pi-5-killer/", "when": 1791673210000}]}, "krebs": {"name": "Krebs on Security", "fetchedAt": 1791744522716, "items": [{"title": "FBI Arrests Executive at Ransomware Negotiation Firm", "link": "https://krebsonsecurity.com/2026/10/fbi-arrests-founder-of-ransomware-negotiation-firm/", "when": 1791591462000}, {"title": "ShinyHunters Extorted Boeing Spin-off Prior to Arrests", "link": "https://krebsonsecurity.com/2026/10/shinyhunters-extorted-boeing-spin-off-prior-to-arrests/", "when": 1791380925000}, {"title": "Dutch Police Arrest \u2018Reformed\u2019 Hacker in Shiny Hunters Investigation", "link": "https://krebsonsecurity.com/2026/09/dutch-police-arrest-reformed-hacker-in-shiny-hunters-investigation/", "when": 1790608137000}, {"title": "U.S. Soldier Gets 70 Months in Prison for AT&T, Verizon Extortions", "link": "https://krebsonsecurity.com/2026/09/u-s-soldier-gets-70-months-in-prison-for-att-verizon-extortions/", "when": 1790372680000}, {"title": "Data Broker Radaris Loses Domains in Privacy Fight", "link": "https://krebsonsecurity.com/2026/09/data-broker-radaris-loses-domains-in-privacy-fight/", "when": 1789582462000}, {"title": "Microsoft Plugs Nearly 1,000 Security Holes", "link": "https://krebsonsecurity.com/2026/09/microsoft-plugs-nearly-1000-security-holes/", "when": 1788903862000}, {"title": "FBI Probes Service Selling 153M+ Drivers Licenses", "link": "https://krebsonsecurity.com/2026/09/fbi-probes-service-selling-153m-drivers-licenses/", "when": 1788302428000}, {"title": "Two Alleged \u2018TeamPCP\u2019 Hackers Arrested in Australia", "link": "https://krebsonsecurity.com/2026/08/two-alleged-teampcp-hackers-arrested-in-australia/", "when": 1787828655000}, {"title": "Who\u2019s Tracking You? Use This New Service to Find Out", "link": "https://krebsonsecurity.com/2026/08/whos-tracking-you-use-this-new-service-to-find-out/", "when": 1786706675000}, {"title": "Microsoft Plugs Nearly 400 Security Holes", "link": "https://krebsonsecurity.com/2026/08/microsoft-plugs-nearly-400-security-holes/", "when": 1786483715000}]}, "ars": {"name": "Ars Technica", "fetchedAt": 1791744523477, "items": [{"title": "Prime Video unveils Blade Runner 2099 full trailer at NYCC", "link": "https://arstechnica.com/culture/2026/10/prime-video-unveils-blade-runner-2099-full-trailer-at-nycc/", "when": 1791730224000}, {"title": "One with the world? A new look at brains transformed by psychedelics.", "link": "https://arstechnica.com/science/2026/10/the-psychedelic-brain-looks-like-chaos-underneath-theres-order/", "when": 1791630935000}, {"title": "Neanderthal wooden tools from Spain found preserved in stone", "link": "https://arstechnica.com/science/2026/10/neanderthal-wooden-tools-from-spain-found-preserved-in-stone/", "when": 1791585243000}, {"title": "Ukraine\u2019s drones knock out AI data center belonging to \"Russia\u2019s Google\"", "link": "https://arstechnica.com/gadgets/2026/10/ukraines-drones-knock-out-ai-data-center-belonging-to-russias-google/", "when": 1791583447000}, {"title": "A Cray-1 supercomputer replica from 30 \"obsolete\" Mac Minis", "link": "https://arstechnica.com/gadgets/2026/10/a-cray-1-supercomputer-replica-from-30-obsolete-mac-minis/", "when": 1791582672000}, {"title": "NASA issues long-awaited call to industry for private space stations", "link": "https://arstechnica.com/space/2026/10/nasa-issues-long-awaited-call-to-industry-for-private-space-stations/", "when": 1791581649000}, {"title": "What's been driving Hawaii's lava fountains?", "link": "https://arstechnica.com/science/2026/10/whats-been-driving-hawaiis-lava-fountains/", "when": 1791579901000}, {"title": "AI coding agents generate more code, but not more software", "link": "https://arstechnica.com/ai/2026/10/ai-coding-agents-generate-more-code-but-not-more-software/", "when": 1791575030000}, {"title": "Outrage grows as CDC reportedly poised to fund \"unethical\" vaccine trial", "link": "https://arstechnica.com/health/2026/10/rfk-jr-still-eager-to-fund-vaccine-trial-that-would-expose-babies-to-deadly-virus/", "when": 1791574047000}, {"title": "PC shipments fall 20.1 percent in \u201csharpest decline\u201d since Q1 2023", "link": "https://arstechnica.com/information-technology/2026/10/pc-shipments-fall-20-1-percent-in-sharpest-decline-since-q1-2023/", "when": 1791572092000}, {"title": "AI disqualification yields new Nikon Small World in Motion winner", "link": "https://arstechnica.com/science/2026/10/winning-nikon-small-world-in-motion-video-disqualified-for-ai-use/", "when": 1791571446000}, {"title": "Your artwork could be featured in the next Debian release", "link": "https://arstechnica.com/gadgets/2026/10/your-artwork-could-be-featured-in-the-next-debian-release/", "when": 1791570806000}, {"title": "Starlink spectrum deal boosts Musk plan to beat AT&T, T-Mobile, and Verizon", "link": "https://arstechnica.com/tech-policy/2026/10/starlink-spectrum-deal-boosts-musk-plan-to-beat-att-t-mobile-and-verizon/", "when": 1791570279000}, {"title": "Microsoft barred from sponsoring foreign workers for US residency", "link": "https://arstechnica.com/tech-policy/2026/10/trump-administration-targets-microsoft-in-new-immigration-crackdown/", "when": 1791551673000}, {"title": "Rocket Report: A rare Falcon 9 scrub; is it just about Vulcan's time to shine?", "link": "https://arstechnica.com/space/2026/10/rocket-report-a-rare-falcon-9-scrub-is-it-just-about-vulcans-time-to-shine/", "when": 1791543657000}, {"title": "Volkswagen's replacement for the ID.4 crossover is here", "link": "https://arstechnica.com/cars/2026/10/volkswagens-replacement-for-the-id-4-crossover-is-here/", "when": 1791540059000}, {"title": "SpaceX calls for better coordination in orbit after near-misses with Starlink", "link": "https://arstechnica.com/space/2026/10/spacex-calls-for-better-coordination-in-orbit-after-near-misses-with-starlink/", "when": 1791495452000}, {"title": "Judge weighs if Trump can charge $100K for early access to Truth Social posts", "link": "https://arstechnica.com/tech-policy/2026/10/judge-weighs-if-trump-can-charge-100k-for-early-access-to-truth-social-posts/", "when": 1791492781000}, {"title": "Trump Mobile hack and apparent lack of FCC authorization raise security alarms", "link": "https://arstechnica.com/tech-policy/2026/10/trump-mobile-doesnt-seem-to-have-fcc-authorization-for-phone-service-senator-says/", "when": 1791491971000}, {"title": "Feds get ready to rewrite car headlight rules", "link": "https://arstechnica.com/cars/2026/10/feds-get-ready-to-rewrite-car-headlight-rules/", "when": 1791491173000}]}, "lobsters": {"name": "Lobsters", "fetchedAt": 1791744523898, "items": [{"title": "Making React Context Cheap with React Compiler", "link": "https://jjenzz.com/making-react-context-cheap/", "when": 1791743187000}, {"title": "I'm sorry, but you still have to think", "link": "https://itsallaboutthebit.com/i-am-sorry-but-you-still-have-to-think/", "when": 1791742189000}, {"title": "The wild west of polyglot docs sites", "link": "https://technicalwriting.dev/blog/2026/10/polyglot/index.html", "when": 1791740626000}, {"title": "Arena Allocators in C", "link": "https://eliasebner.com/blog/guides/arena-allocators-in-c/", "when": 1791737998000}, {"title": "What we ended up doing about alias propagation", "link": "https://futhark-lang.org/blog/2026-10-11-what-we-did-about-aliasing.html", "when": 1791737666000}, {"title": "I'm still around.. I'm just not writing here", "link": "https://rachelbythebay.com/w/2026/10/08/idle/", "when": 1791729843000}, {"title": "Valen's Memory Safety: A New Kind of Borrow Checking", "link": "https://verdagon.dev/blog/valen-group-borrowing", "when": 1791721381000}, {"title": "Hacking the Eufy Doorbell and Base Station", "link": "https://adepts.of0x.cc/Eufy-DoorBell-hacking/", "when": 1791719660000}, {"title": "What's Wrong with GitHub", "link": "https://www.gnu.org/philosophy/whats-wrong-with-github.html", "when": 1791711476000}, {"title": "How big is a Git commit?", "link": "https://ratfactor.com/cards/git-commit-size", "when": 1791710742000}, {"title": "JSON Tiles: Fast Analytics on Semi-Structured Data (2021)", "link": "https://db.cit.tum.de/~durner/papers/json-tiles-sigmod21.pdf", "when": 1791699694000}, {"title": "LineageOS 24.0 released", "link": "https://lineageos.org/Changelog-32/", "when": 1791699685000}, {"title": "How shredding JSON is giving Logfire 1000x query speedups", "link": "https://pydantic.dev/articles/dynamic-shredding-2026-01-26", "when": 1791699386000}, {"title": "Consistency is not a localized property", "link": "https://n-the-loop.com/blog/consistency-is-not-a-localized-property/", "when": 1791679888000}, {"title": "Making np.searchsorted up to 25\u00d7 Faster in NumPy 2.5", "link": "https://blog.scientific-python.org/numpy/searchsorted/", "when": 1791674751000}, {"title": "Byte Language Models: Scaling, Emergent Abstractions, and Information Allocation", "link": "https://arxiv.org/html/2610.05978v1", "when": 1791671114000}, {"title": "Inside a 1980s filter chip that uses switched capacitors", "link": "http://www.righto.com/2026/10/ML10-switched-capacitor-filter.html", "when": 1791667731000}, {"title": "The 2D physics prototype behind GTA\u2019s vehicles", "link": "https://patkerr.co.uk/2d-vehicles/", "when": 1791666375000}, {"title": "Kiesel Devlog #15: Release 0.4.0", "link": "https://linus.dev/posts/kiesel-devlog-15/", "when": 1791654946000}, {"title": "SNTPings, draw on a canvas using ICMPv6", "link": "https://pings.utwente.io/", "when": 1791651941000}, {"title": "Why 'externalized' proofs of cyclic trait impls does not work", "link": "https://smallcultfollowing.com/babysteps/blog/2026/10/10/modular-vs-external-proofs/", "when": 1791651408000}, {"title": "Iframes that finally fit their content", "link": "https://alfy.blog/2026/10/09/iframe-that-finally-fit-their-content.html", "when": 1791636896000}, {"title": "The Lightbulb Computer: Reimagining Spatial & Ambient Computing with Projectors", "link": "https://lightbulbcomputer.com/", "when": 1791633209000}, {"title": "oh, apparently it's not possible to portably check for string-to-float conversion errors in standard c", "link": "https://sebsite.pw/w/20261009-strtod.html", "when": 1791610638000}, {"title": "No Man Is an Island", "link": "https://borretti.me/article/no-man-is-an-island", "when": 1791596227000}]}, "retro": {"name": "r/retrocomputing", "fetchedAt": 1791744213990, "items": [{"title": "Sharing a presentation I gave recently on hybrid hardware throughout the last 50 years leading to the blurred product categories we have today. I come from more of a game console angle than a PC angle so I'm happy to learn from this group any missing links / information that I could add to this!", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3fw4j/sharing_a_presentation_i_gave_recently_on_hybrid/", "when": 1791743996000}, {"title": "AST Advantage! Adventure 4066d Edge Connector Pinout", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3cs4n/ast_advantage_adventure_4066d_edge_connector/", "when": 1791736666000}, {"title": "Got a toshiba T2000SX for free", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3cnyx/got_a_toshiba_t2000sx_for_free/", "when": 1791736380000}, {"title": "Got a toshiba T2000SX for free", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3cmsq/got_a_toshiba_t2000sx_for_free/", "when": 1791736304000}, {"title": "30 years ago yesterday - 10 October - I started preserving 107 MIDI files from the early web. They're now playable in a modern browser.", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3b09p/30_years_ago_yesterday_10_october_i_started/", "when": 1791732394000}, {"title": "Running Half-Life (GoldSrc) on a somewhat \u201cold\u201d mini PC", "link": "https://www.reddit.com/r/retrocomputing/comments/1x39g3x/running_halflife_goldsrc_on_a_somewhat_old_mini_pc/", "when": 1791728512000}, {"title": "Is my approach efficient for creating a custom graphic format for my fantasy console with Windows XP?", "link": "https://www.reddit.com/r/retrocomputing/comments/1x39f78/is_my_approach_efficient_for_creating_a_custom/", "when": 1791728451000}, {"title": "Looking for 3.5\" and 5.25\" floppy images (DOS era) to test a disk image inspector against", "link": "https://www.reddit.com/r/retrocomputing/comments/1x38sgz/looking_for_35_and_525_floppy_images_dos_era_to/", "when": 1791726835000}, {"title": "New Portuguese retrocomputing sub!", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3629w/new_portuguese_retrocomputing_sub/", "when": 1791718806000}, {"title": "The massive consensus both then and now seems to be that the foundation of MacOS HAD to be fully replaced for it to become a truly modern operating system. Why is that\u2014why would an attempt to introduce preemptive multitasking, multiuser support, et cetera into the Classic kernel be doomed to fail?", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3535s/the_massive_consensus_both_then_and_now_seems_to/", "when": 1791715453000}, {"title": "DARKMAN", "link": "https://www.reddit.com/r/retrocomputing/comments/1x34ht5/darkman/", "when": 1791713344000}, {"title": "I wrote an Apple IIe emulator with a Monitor II CRT look, real Disk II sounds, CP/M and mouse support (open source, macOS/Linux/Windows)", "link": "https://www.reddit.com/r/retrocomputing/comments/1x3417u/i_wrote_an_apple_iie_emulator_with_a_monitor_ii/", "when": 1791711686000}, {"title": "I made an all-in-one encyclopedia app inspired by Microsoft Encarta", "link": "https://www.reddit.com/r/retrocomputing/comments/1x31oih/i_made_an_allinone_encyclopedia_app_inspired_by/", "when": 1791702903000}, {"title": "I hope to soon find or build a late 80s/early 90s \"crappy\" PC.", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2yhwd/i_hope_to_soon_find_or_build_a_late_80searly_90s/", "when": 1791691634000}, {"title": "Got this new CRT for $5 but don't know who made it", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2t5l7/got_this_new_crt_for_5_but_dont_know_who_made_it/", "when": 1791674940000}, {"title": "Merry Christmas, everyone", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2s7qd/merry_christmas_everyone/", "when": 1791672199000}, {"title": "If you know you know...", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2ngpn/if_you_know_you_know/", "when": 1791659638000}, {"title": "Looking For Classic Computerware", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2l4mp/looking_for_classic_computerware/", "when": 1791653763000}, {"title": "Trying to install Linux after hard drive replacement, how do I fix", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2kbqr/trying_to_install_linux_after_hard_drive/", "when": 1791651772000}, {"title": "Help Me Bring My Dad\u2019s 1996 Serial Mouse Back to Life!", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2i0o7/help_me_bring_my_dads_1996_serial_mouse_back_to/", "when": 1791645982000}, {"title": "Casually breaking down old printers", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2c6k4/casually_breaking_down_old_printers/", "when": 1791628991000}, {"title": "The great-grandfather of Oberon: Algol60 with a reusable IR targeting LuaJIT", "link": "https://www.reddit.com/r/retrocomputing/comments/1x2bv61/the_greatgrandfather_of_oberon_algol60_with_a/", "when": 1791627821000}, {"title": "Follow-up: Revisiting a 1986 RTOS led me to someone who used VRTX in 1982", "link": "https://www.reddit.com/r/retrocomputing/comments/1x26p7g/followup_revisiting_a_1986_rtos_led_me_to_someone/", "when": 1791608768000}, {"title": "Resurrection of Stealth", "link": "https://www.reddit.com/r/retrocomputing/comments/1x1im7t/resurrection_of_stealth/", "when": 1791544400000}, {"title": "Keeping it positive", "link": "https://www.reddit.com/r/retrocomputing/comments/yodi3v/keeping_it_positive/", "when": 1667798039000}]}} || {};
+  const NEWSWIRE = [
+    ["OMNIDYNE SYSTEMS WINS PHONE COMPANY 'NETWORK MANAGEMENT' CONTRACT", "BUSINESS WIRE"],
+    ["2400 BAUD MODEMS DIP UNDER $300 AT CRAZY EDDIE'S", "COMPUTER SHOPPER"],
+    ["FBI WARNS PARENTS: KNOW WHAT YOUR KIDS DO AFTER MIDNIGHT", "AP"],
+    ["DEAD LETTER BBS BACK ONLINE AFTER THREE-DAY OUTAGE", "BBS LIST"],
+    ["RIDGEMONT HIGH REPORTS 'GLITCH' IN ATTENDANCE RECORDS", "LOCAL NEWS"],
+    ["HAYES SHIPS SMARTMODEM 2400, ANSWERS THE PHONE BY ITSELF", "BYTE"],
+    ["PHONE COMPANY PROMISES 'SMARTER SWITCHES' BY 1987", "AP"],
+    ["CONGRESS PASSES COMPUTER FRAUD AND ABUSE ACT", "WASHINGTON POST"],
+    ["MYSTERY TONE HEARD ON HOLLOW CREEK EXCHANGE, RESIDENTS SAY", "LOCAL NEWS"],
+    ["OMNIDYNE TOWER ADDS NIGHT SECURITY TO LOWER LEVELS", "CITY DESK"],
+    ["NEW AMIGA 1000 DRAWS CROWDS AT USER GROUP MEETING", "USER GROUP NEWSLETTER"],
+    ["'WARGAMES' RE-RUN TOPS LATE-NIGHT RATINGS AGAIN", "TV GUIDE"],
+    ["SYSOPS DEBATE: SHOULD BOARDS LOG CALLER NUMBERS?", "FIDONET ECHO"],
+    ["ENGINEER LEAVES OMNIDYNE R&D, COMPANY DECLINES COMMENT", "BUSINESS WIRE"],
+    ["5.25-INCH FLOPPIES NOW 10 FOR $9.99", "COMPUTER SHOPPER"],
+    ["ARCADE OWNERS REPORT RECORD NIGHT FOR GAUNTLET", "LOCAL NEWS"],
+  ];
+  const el = id => document.getElementById(id);
+  const win = el("rss"), bar = el("rss-bar"), pick = el("rss-pick"), list = el("rss-list"), status = el("rss-status");
+  let custom = [], current = "wire", timer = 0, wireTimer = 0, wire = [], loading = 0, unsub = null;
+  const dbReady = window.claude && claude.use ? claude.use("db").catch(() => null) : Promise.resolve(null);
+  try { custom = JSON.parse(localStorage.getItem("netrunner86.rss.custom")) || []; current = localStorage.getItem("netrunner86.rss.feed") || "wire"; } catch {}
+  const all = () => [...FEEDS, ...custom];
+
+  function fillPicker() {
+    pick.innerHTML = "";
+    for (const f of all()) { const o = document.createElement("option"); o.value = f.id; o.textContent = f.name; pick.appendChild(o); }
+    if (!all().some(f => f.id === current)) current = "wire";
+    pick.value = current;
+  }
+  // RSS <item> and Atom <entry>, newest first.
+  function parse(xml) {
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
+    if (doc.querySelector("parsererror")) return [];
+    const text = (n, sel) => (n.querySelector(sel)?.textContent || "").trim();
+    return [...doc.querySelectorAll("item, entry")].slice(0, 40).map(n => {
+      const linkEl = n.querySelector("link");
+      const link = linkEl ? (linkEl.getAttribute("href") || linkEl.textContent || "").trim() : "";
+      const when = Date.parse(text(n, "pubDate") || text(n, "published") || text(n, "updated") || text(n, "date"));
+      return { title: text(n, "title") || "(untitled)", link, when: isNaN(when) ? null : when };
+    });
+  }
+  function ago(t) {
+    if (!t) return "";
+    const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+    return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+  }
+  function render(items, source) {
+    list.innerHTML = "";
+    for (const it of items) {
+      const li = document.createElement("li");
+      const t = document.createElement(/^https?:\/\//i.test(it.link) ? "a" : "span");
+      t.textContent = it.title; t.className = "hi";
+      if (t.tagName === "A") { t.href = it.link; t.target = "_blank"; t.rel = "noopener noreferrer"; }
+      const meta = document.createElement("div"); meta.className = "dim";
+      meta.textContent = [ago(it.when), it.src || source].filter(Boolean).join("  //  ");
+      li.append(t, meta); list.appendChild(li);
+    }
+  }
+  const setStatus = (txt, cls = "dim") => { status.textContent = txt; status.className = "rss-status " + cls; };
+  const clock = () => new Date().toTimeString().slice(0, 5);
+
+  // The in-game wire: a handful of stories now, another one "comes in" every so often.
+  function startWire() {
+    if (!wire.length) {
+      const pool = [...NEWSWIRE].sort(() => Math.random() - .5);
+      wire = pool.slice(0, 7).map(([title, src], i) => ({ title, src, when: Date.now() - (i + 1) * (7 + Math.random() * 25) * 60000 }));
+      wire.pool = pool.slice(7);
+    }
+    render(wire, ""); setStatus(`LIVE  //  NEWSWIRE  //  ${wire.length} stories  //  set in 1986`, "fg");
+    clearInterval(wireTimer);
+    wireTimer = setInterval(() => {
+      if (current !== "wire" || !wire.pool.length) return;
+      const [title, src] = wire.pool.shift();
+      wire.unshift({ title, src, when: Date.now() });
+      render(wire, ""); setStatus(`LIVE  //  NEWSWIRE  //  new story at ${clock()}`, "hi");
+    }, 45000);
+  }
+  async function grab(u) {
+    const ctl = new AbortController(); const kill = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const r = await fetch(u, { signal: ctl.signal });
+      if (!r.ok) throw 0;
+      const body = await r.text();
+      let items;
+      if (/^\s*\{/.test(body)) {
+        const j = JSON.parse(body);
+        items = (j.items || []).map(i => ({ title: (i.title || "(untitled)").trim(), link: i.link || "", when: Date.parse(i.pubDate) || null }));
+      } else items = parse(body);
+      if (!items.length) throw 0;
+      return items;
+    } finally { clearTimeout(kill); }
+  }
+  async function fetchFeed(url) {
+    try { return { items: await grab(url), via: "direct" }; } catch {}
+    try { return { items: await Promise.any(RELAYS.map(r => grab(r(url)))), via: "via relay" }; } catch {}
+    return null;
+  }
+  // Online: listen to the feed's database document, kept fresh by the scheduled refresh.
+  function fromDb(db, f) {
+    setStatus(`DIALING ${f.name.toUpperCase()} ...`); list.innerHTML = "";
+    unsub = db.doc("feeds/" + f.id).onSnapshot(snap => {
+      const d = snap.exists ? snap.data() : null;
+      if (!d || !Array.isArray(d.items) || !d.items.length) {
+        setStatus("WAITING FOR THE FIRST NEWS RELAY. The scheduled refresh hasn't stored this feed yet. The NEWSWIRE works now.", "dim");
+        list.innerHTML = ""; return;
+      }
+      render(d.items, f.name);
+      const at = d.fetchedAt ? new Date(d.fetchedAt).toTimeString().slice(0, 5) : "?";
+      setStatus(`LIVE  //  ${d.items.length} ${d.items.length === 1 ? "item" : "items"}  //  relayed ${at} (${ago(d.fetchedAt)})`, "fg");
+    }, () => setStatus("NO CARRIER. The news relay can't be read right now.", "alert"));
+  }
+  async function load() {
+    clearTimeout(timer);
+    if (unsub) { unsub(); unsub = null; }
+    const f = all().find(x => x.id === current) || FEEDS[0];
+    if (f.builtin) return startWire();
+    const mine = ++loading;
+    const db = location.protocol === "file:" ? null : await dbReady;
+    if (mine !== loading) return;
+    if (db && FEEDS.includes(f)) return fromDb(db, f);
+    setStatus(`DIALING ${f.name.toUpperCase()} ...`); list.innerHTML = "";
+    const got = await fetchFeed(f.url);
+    if (mine !== loading) return;   // the player switched feeds meanwhile
+    const snap = SNAPSHOT[f.id];
+    if (!got && snap && snap.items && snap.items.length) {
+      render(snap.items, f.name);
+      const day = new Date(snap.fetchedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      setStatus(`SAVED COPY  //  ${snap.items.length} items from ${day}  //  live feed unreachable, retrying in 10 min`, "dim");
+      timer = setTimeout(load, 10 * 60000);
+      return;
+    }
+    if (!got) {
+      setStatus(location.protocol === "file:"
+        ? "NO CARRIER. This feed can't be reached (offline, or the site refuses). Try another, or the NEWSWIRE."
+        : FEEDS.includes(f) ? "NO CARRIER. The online version can't reach outside sites, and the news relay isn't available in this view. The NEWSWIRE works everywhere."
+        : "NO CARRIER. Feeds you add yourself only work in the downloaded netrunner86.html. The built-in feeds come through the news relay here.", "alert");
+      return;
+    }
+    got.items.sort((a, b) => (b.when || 0) - (a.when || 0));
+    render(got.items, f.name);
+    setStatus(`LIVE  //  ${got.items.length} ${got.items.length === 1 ? "item" : "items"}  //  updated ${clock()}  //  ${got.via}`, "fg");
+    timer = setTimeout(load, 10 * 60000);
+  }
+
+  // ---- window: open/close, drag by the title bar, remember the spot ----
+  function place(saved) {
+    const small = innerWidth < 700;
+    if (saved && !small) { win.style.left = saved.x + "px"; win.style.top = saved.y + "px"; win.style.width = saved.w + "px"; win.style.height = saved.h + "px"; }
+    else if (small) { win.style.width = (innerWidth - 16) + "px"; win.style.height = Math.round(innerHeight * .45) + "px"; win.style.left = "8px"; win.style.top = Math.round(innerHeight * .12) + "px"; }
+    else { win.style.left = (innerWidth - 420) + "px"; win.style.top = "70px"; }
+    clamp();
+  }
+  function clamp() {
+    const r = win.getBoundingClientRect();
+    win.style.left = Math.min(Math.max(0, r.left), Math.max(0, innerWidth - 80)) + "px";
+    win.style.top = Math.min(Math.max(0, r.top), Math.max(0, innerHeight - 40)) + "px";
+  }
+  function remember() {
+    const r = win.getBoundingClientRect();
+    try { localStorage.setItem("netrunner86.rss.win", JSON.stringify({ x: r.left, y: r.top, w: r.width, h: r.height })); } catch {}
+  }
+  bar.addEventListener("pointerdown", e => {
+    if (e.target.closest("button")) return;
+    const r = win.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    bar.setPointerCapture(e.pointerId); win.classList.add("dragging");
+    const move = ev => { win.style.left = (ev.clientX - dx) + "px"; win.style.top = (ev.clientY - dy) + "px"; clamp(); };
+    const up = () => { bar.removeEventListener("pointermove", move); win.classList.remove("dragging"); remember(); };
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", up, { once: true }); bar.addEventListener("pointercancel", up, { once: true });
+  });
+  new ResizeObserver(() => { if (!win.hidden && !win.classList.contains("dragging")) remember(); }).observe(win);
+  addEventListener("resize", () => { if (!win.hidden) clamp(); });
+  win.addEventListener("pointerdown", e => e.stopPropagation());   // clicks here never skip text or power on
+  win.addEventListener("keydown", e => e.stopPropagation());
+  el("rss-close").addEventListener("click", () => toggle(false));
+  el("rss-refresh").addEventListener("click", () => { if (current === "wire") wire = []; load(); });
+  pick.addEventListener("change", () => { current = pick.value; try { localStorage.setItem("netrunner86.rss.feed", current); } catch {} load(); });
+  el("rss-add").addEventListener("submit", e => {
+    e.preventDefault();
+    const url = el("rss-url").value.trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) { setStatus("That doesn't look like a feed URL (it should start with https://).", "alert"); return; }
+    const id = "c" + Date.now();
+    custom.push({ id, name: url.replace(/^https?:\/\/(www\.)?/i, "").slice(0, 40), url });
+    try { localStorage.setItem("netrunner86.rss.custom", JSON.stringify(custom)); } catch {}
+    el("rss-url").value = ""; current = id; fillPicker(); load();
+    try { localStorage.setItem("netrunner86.rss.feed", current); } catch {}
+  });
+
+  function toggle(show) {
+    show = show ?? win.hidden;
+    if (show === !win.hidden) return;
+    win.hidden = !show;
+    try { localStorage.setItem("netrunner86.rss.open", show ? "1" : "0"); } catch {}
+    if (show) {
+      let saved = null; try { saved = JSON.parse(localStorage.getItem("netrunner86.rss.win")); } catch {}
+      place(saved); fillPicker(); load();
+    } else { clearTimeout(timer); clearInterval(wireTimer); if (unsub) { unsub(); unsub = null; } cmd.focus({ preventScroll: true }); }
+  }
+  try { if (localStorage.getItem("netrunner86.rss.open") === "1") toggle(true); } catch {}
+  return { toggle, parse, feeds: FEEDS };
+})();
+
+/* ===================================================================
+   Desktop mode: the game runs in a window on a desktop that matches the
+   terminal theme. CHROME gives each theme its window/taskbar style
+   (data-chrome CSS), window title ({h} = handle) and start button label.
+   =================================================================== */
+const Desktop = (() => {
+  const CHROME = {
+    green: ["retro", "NETRUN.EXE  -  2400 BAUD", "SYSTEM"], amber: ["retro", "NETRUN.EXE  -  2400 BAUD", "SYSTEM"],
+    ibm: ["gem", "A:\\NETRUN.EXE", "Desk"], linux: ["plain", "{h}@netrunner: ~", "Applications"],
+    parrot: ["parrot", "[{h}@parrot]-[~]", "Applications"], ubuntu: ["gnome", "{h}@netrunner: ~", "Activities"],
+    zx: ["zx", "NETRUNNER '86  48K", "MENU"], cmd: ["win95", "Command Prompt - netrun", "Start"],
+    powershell: ["win10", "Windows PowerShell", "Start"],
+  };
+  const root = document.documentElement, el = id => document.getElementById(id);
+  const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  let frame = "desktop", skin = "green", handle = "guest";
+  try { frame = localStorage.getItem("netrunner86.frame") || "desktop"; } catch {}
+  function render() {
+    root.dataset.frame = frame;
+    const [chrome, title, start] = CHROME[skin] || CHROME.green;
+    root.dataset.chrome = chrome;
+    const t = title.replaceAll("{h}", handle.toLowerCase());
+    el("wtitle").textContent = t; el("task").textContent = t; el("start-btn").textContent = start;
+    tick();
+    dispatchEvent(new Event("resize"));   // the game area changed size: refit art
+  }
+  function tick() {   // it is always 1986 on this desktop
+    const d = new Date(), hh = String(d.getHours()).padStart(2, "0"), mm = String(d.getMinutes()).padStart(2, "0");
+    el("clock").textContent = `${MON[d.getMonth()]} ${d.getDate()} 1986  ${hh}:${mm}`;
+  }
+  setInterval(tick, 15000);
+  const readme = el("readme");
+  const toggleReadme = show => { readme.hidden = !(show ?? readme.hidden); };
+  for (const b of document.querySelectorAll(".icon, #start-btn")) b.addEventListener("click", e => {
+    e.stopPropagation();
+    const act = b.dataset.act || "readme";
+    if (act === "music") Music.setTrack(Music.track + 1);
+    if (act === "rss") { RSS.toggle(); return; }
+    if (act === "readme") { toggleReadme(); if (!readme.hidden) return; }
+    cmd.focus({ preventScroll: true });
+  });
+  el("readme-close").addEventListener("click", e => { e.stopPropagation(); toggleReadme(false); cmd.focus({ preventScroll: true }); });
+  render();
+  return {
+    get frame() { return frame; },
+    setFrame(f) { frame = f; try { localStorage.setItem("netrunner86.frame", f); } catch {} render(); },
+    setSkin(id) { skin = id; render(); },
+    setHandle(h) { handle = h; render(); },
+  };
+})();
+
+window.NR = { DATA, generate, feedback, Music, Panel, CRT, Cutscene, Desktop, RSS }; // exposed for tests
+start();
+</script>

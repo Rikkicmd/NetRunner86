@@ -1,0 +1,279 @@
+[
+  {
+    "id": "job_pizza",
+    "title": "Free Pizza Friday",
+    "client": "HUNGRYMAN",
+    "brief": "Luigi's Pizza runs their delivery orders off a cheap dial-up box. Plant my coupon file so every order this week is free. Don't ask.",
+    "min_rep": 0,
+    "reward": 120,
+    "rep": 2,
+    "trace_rate": 3,
+    "payload": [
+      "coupon.dat"
+    ],
+    "objectives": [
+      {
+        "type": "upload",
+        "host": "10.4.4.1",
+        "file": "coupon.dat"
+      }
+    ],
+    "hosts": {
+      "10.4.4.1": {
+        "name": "LUIGIS-ORDERS",
+        "security": 1,
+        "lock": "keypad",
+        "files": {
+          "orders.txt": "14 x LARGE PEPPERONI - DEL TO 42 ELM ST",
+          "menu.txt": "Pepperoni $6.99"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_arcade",
+    "title": "High Score Hero",
+    "client": "TH3_W1Z4RD",
+    "brief": "Some kid at the Starcade keeps beating my GALAXOID record. Their scoreboard syncs to a host downtown. Delete his score file. Grab the master scores list for me too.",
+    "min_rep": 0,
+    "reward": 180,
+    "rep": 2,
+    "trace_rate": 3,
+    "objectives": [
+      {
+        "type": "delete",
+        "host": "10.9.0.3",
+        "file": "kid_score.sav"
+      },
+      {
+        "type": "download",
+        "host": "10.9.0.3",
+        "file": "hiscores.lst"
+      }
+    ],
+    "hosts": {
+      "10.9.0.3": {
+        "name": "STARCADE-SYNC",
+        "security": 1,
+        "lock": "wordlist",
+        "files": {
+          "kid_score.sav": "GALAXOID 1,204,880 - MKX",
+          "hiscores.lst": "1. MKX 1204880\n2. WZD 1188020\n3. AAA 900000"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_bank_memo",
+    "title": "Insider Information",
+    "client": "MR. GREY",
+    "brief": "First Federal of Hollow Creek is about to announce a merger. Their memo server has the details. Read it and bring me a copy. Their ops box is weak, the memo server is not. Be smart.",
+    "min_rep": 8,
+    "reward": 450,
+    "rep": 5,
+    "trace_rate": 5,
+    "objectives": [
+      {
+        "type": "download",
+        "host": "172.16.3.9",
+        "file": "merger_memo.txt"
+      }
+    ],
+    "hosts": {
+      "172.16.3.4": {
+        "name": "FFHC-OPS",
+        "security": 1,
+        "lock": "keypad",
+        "files": {
+          "shift_notes.txt": "Remember the memo server password is the bank founder's name: 'whitlock'. -IT"
+        }
+      },
+      "172.16.3.9": {
+        "name": "FFHC-MEMO",
+        "security": 3,
+        "lock": "keypad",
+        "password": "whitlock",
+        "files": {
+          "merger_memo.txt": "CONFIDENTIAL: First Federal to merge with Atlantic Trust, announced Nov 3.",
+          "holiday.txt": "Office party Dec 19"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_cleanup",
+    "title": "Erase Me",
+    "client": "GH0ST",
+    "brief": "I got sloppy. The county police records system has a file on me. Delete it, and delete the log that shows you did. Then download their arrest index so I know who else they're watching.",
+    "min_rep": 15,
+    "reward": 800,
+    "rep": 8,
+    "trace_rate": 6,
+    "objectives": [
+      {
+        "type": "delete",
+        "host": "172.20.0.50",
+        "file": "case_8812.rec"
+      },
+      {
+        "type": "delete",
+        "host": "172.20.0.50",
+        "file": "audit.log"
+      },
+      {
+        "type": "download",
+        "host": "172.20.0.50",
+        "file": "arrest_index.db"
+      }
+    ],
+    "hosts": {
+      "172.20.0.50": {
+        "name": "COUNTY-RECORDS",
+        "security": 3,
+        "lock": "wordlist",
+        "files": {
+          "case_8812.rec": "SUBJECT: 'GH0ST' - wire fraud - PENDING",
+          "audit.log": "ALL ACCESS LOGGED",
+          "arrest_index.db": "[1,402 records]"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_radio",
+    "title": "Pirate Radio",
+    "client": "DJ STATIC",
+    "brief": "WKRZ's overnight playlist runs off a dusty box in the station basement. Swap their playlist for my mixtape. Nobody listens at 4 AM anyway. Except everybody who matters.",
+    "min_rep": 0,
+    "reward": 160,
+    "rep": 2,
+    "trace_rate": 3,
+    "payload": [
+      "mixtape.lst"
+    ],
+    "objectives": [
+      {
+        "type": "upload",
+        "host": "10.12.8.4",
+        "file": "mixtape.lst"
+      },
+      {
+        "type": "delete",
+        "host": "10.12.8.4",
+        "file": "playlist.lst"
+      }
+    ],
+    "hosts": {
+      "10.12.8.4": {
+        "name": "WKRZ-AUTOMATION",
+        "security": 1,
+        "lock": "dial",
+        "files": {
+          "playlist.lst": "04:00 Easy Listening Hour\n05:00 Farm Report",
+          "station_id.txt": "WKRZ 98.6 - The Smooth Sound"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_arcade2",
+    "title": "Tournament Fix",
+    "client": "TH3_W1Z4RD",
+    "brief": "The Starcade is running a GALAXOID tournament and the bracket sits on their sync box again. They upgraded the lock to one of those memory-pattern things. Get me the bracket so I know who I'm up against.",
+    "min_rep": 5,
+    "reward": 260,
+    "rep": 3,
+    "trace_rate": 4,
+    "objectives": [
+      {
+        "type": "download",
+        "host": "10.9.0.3",
+        "file": "bracket.txt"
+      }
+    ],
+    "hosts": {
+      "10.9.0.3": {
+        "name": "STARCADE-SYNC",
+        "security": 2,
+        "lock": "sequence",
+        "files": {
+          "bracket.txt": "ROUND 1: WZD vs MKX\nROUND 1: ZER vs AAA",
+          "prizes.txt": "1st: 500 tokens + jacket"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_museum",
+    "title": "The Curator's Ledger",
+    "client": "MADAME X",
+    "brief": "The Metropolitan Museum keeps a private ledger of 'quietly acquired' pieces. A collector I know would pay a lot to see it. Their records office has a safe-dial lock. Their vault index is tougher. The records office will know the way in.",
+    "min_rep": 20,
+    "reward": 950,
+    "rep": 7,
+    "trace_rate": 6,
+    "objectives": [
+      {
+        "type": "download",
+        "host": "172.18.4.20",
+        "file": "private_ledger.db"
+      }
+    ],
+    "hosts": {
+      "172.18.4.11": {
+        "name": "MET-RECORDS",
+        "security": 2,
+        "lock": "dial",
+        "files": {
+          "it_note.txt": "Vault index password reset to 'goldleaf' after the holiday party incident. -Facilities IT"
+        }
+      },
+      "172.18.4.20": {
+        "name": "MET-VAULT-INDEX",
+        "security": 3,
+        "lock": "sequence",
+        "password": "goldleaf",
+        "files": {
+          "private_ledger.db": "[37 entries - provenance: UNKNOWN]",
+          "catalogue.txt": "Public collection: 12,400 items"
+        }
+      }
+    }
+  },
+  {
+    "id": "job_satellite",
+    "title": "Dish Network",
+    "client": "ORBITAL",
+    "brief": "Zenith Satellite's uplink scheduler decides which channels get beamed where. Plant my schedule so the whole East Coast gets three hours of public-domain cartoons on Saturday morning. Wipe the uplink log after. Big job, big pay.",
+    "min_rep": 30,
+    "reward": 1500,
+    "rep": 10,
+    "trace_rate": 7,
+    "payload": [
+      "cartoons.sch"
+    ],
+    "objectives": [
+      {
+        "type": "upload",
+        "host": "192.168.40.2",
+        "file": "cartoons.sch"
+      },
+      {
+        "type": "delete",
+        "host": "192.168.40.2",
+        "file": "uplink.log"
+      }
+    ],
+    "hosts": {
+      "192.168.40.2": {
+        "name": "ZENITH-UPLINK",
+        "security": 3,
+        "lock": "dial",
+        "files": {
+          "uplink.log": "ALL SCHEDULE CHANGES LOGGED",
+          "schedule.sch": "SAT 08:00 Infomercial\nSAT 09:00 Infomercial"
+        }
+      }
+    }
+  }
+]

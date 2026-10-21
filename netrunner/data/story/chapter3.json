@@ -1,0 +1,155 @@
+{
+  "number": 3,
+  "title": "SUB-LEVEL 3",
+  "scenes": [
+    {
+      "type": "text",
+      "cutscene": "TOWER",
+      "art": "TERMINAL",
+      "text": "DECEMBER 1986. 1:15 AM.\n\nOmnidyne Tower. Forty floors of black glass downtown, and three more underground that aren't on any blueprint.\n\nYou've spent two weeks with a city directory, a scanner radio and a lot of coffee. The tower runs its doors, lifts and cameras from a facilities computer that dials out to a contractor every night at 1 AM.\n\nTonight, you'll be the one on the other end of that call."
+    },
+    {
+      "type": "mission",
+      "mission": {
+        "id": "story_3_facilities",
+        "title": "Night Shift",
+        "client": "yourself",
+        "brief": "Get into Omnidyne Tower's facilities computer. Read the night guard roster so you know when sub-level 3 is quiet, and download the floor plan for the sub-levels. The facilities box uses an old combination-dial lock.",
+        "reward": 300,
+        "rep": 5,
+        "trace_rate": 5,
+        "objectives": [
+          {"type": "read", "host": "10.40.0.7", "file": "guard_roster.txt"},
+          {"type": "download", "host": "10.40.0.7", "file": "sublevels.plan"}
+        ],
+        "hosts": {
+          "10.40.0.7": {
+            "name": "OMNI-FACILITIES",
+            "security": 2,
+            "lock": "dial",
+            "banner": "OMNIDYNE TOWER // BUILDING SERVICES // AFTER-HOURS MODE",
+            "files": {
+              "guard_roster.txt": "NIGHT ROSTER - SUB-LEVELS\n00:00-02:00  KOWALSKI (patrol)\n02:00-02:20  ** SHIFT CHANGE - SL3 DESK UNSTAFFED **\n02:20-06:00  REYES (desk)\n\nNote from Reyes: the SL3 door controller's override code is still 'ironwood'. Can someone change it before the auditors notice?",
+              "sublevels.plan": "SL1  archive\nSL2  backup power, BASILISK core servers (OMNI-CORE)\nSL3  'secure accommodation' - 4 rooms, door controller SL3-DOORS",
+              "lift_schedule.txt": "Freight lift locked out 23:00-05:00."
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "speaker": "SYSTEM",
+      "text": "2:00 AM. The sub-level 3 desk goes quiet for twenty minutes.\n\nYour modem has two lines tonight. One reaches the SL3 door controller. The other reaches OMNI-CORE, the machine running BASILISK itself.\n\nThere may only be time for one of them before someone notices."
+    },
+    {
+      "type": "choice",
+      "prompt": "What do you go for?",
+      "options": [
+        {
+          "label": "Both. Open CASSANDRA's door AND wipe BASILISK.",
+          "flag": "went_for_both",
+          "text": "Greedy. Maybe stupid. But you might never get this close again."
+        },
+        {
+          "label": "Just the door. Get CASSANDRA out.",
+          "flag": "rescue_only",
+          "text": "BASILISK can wait. She can't."
+        }
+      ]
+    },
+    {
+      "type": "mission",
+      "requires": {"went_for_both": true},
+      "mission": {
+        "id": "story_3_both",
+        "title": "Twenty Minutes",
+        "client": "yourself",
+        "brief": "Two targets, one window. Upload release.cmd to the SL3 door controller to open CASSANDRA's room, and delete basilisk_core.db from OMNI-CORE. The core has a memory-pattern lock. The door controller has an override code somewhere in your notes.",
+        "reward": 1400,
+        "rep": 14,
+        "trace_rate": 6,
+        "payload": ["release.cmd"],
+        "objectives": [
+          {"type": "upload", "host": "10.40.3.1", "file": "release.cmd"},
+          {"type": "delete", "host": "10.40.2.9", "file": "basilisk_core.db"}
+        ],
+        "hosts": {
+          "10.40.3.1": {
+            "name": "SL3-DOORS",
+            "security": 3,
+            "lock": "keypad",
+            "password": "ironwood",
+            "banner": "SL3 ACCESS CONTROL // ROOMS 301-304",
+            "files": {
+              "rooms.txt": "301  EMPTY\n302  EMPTY\n303  OCCUPIED  'C.'\n304  EMPTY",
+              "door.log": "01:58 room 303 meal tray delivered"
+            }
+          },
+          "10.40.2.9": {
+            "name": "OMNI-CORE",
+            "security": 2,
+            "lock": "sequence",
+            "banner": "BASILISK CORE // PHASE 2 STATUS: DEGRADED (SIGNAL NOISE AT HOLLOW CREEK)",
+            "files": {
+              "basilisk_core.db": "[4,112 line signatures - Phase 1 and 2]",
+              "director_memo.txt": "The Hollow Creek noise is deliberate. Find the person who did it. Priority one."
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "mission",
+      "requires": {"rescue_only": true},
+      "mission": {
+        "id": "story_3_rescue",
+        "title": "Room 303",
+        "client": "yourself",
+        "brief": "One target. Upload release.cmd to the SL3 door controller to open CASSANDRA's room. The controller has an override code somewhere in your notes.",
+        "reward": 800,
+        "rep": 9,
+        "trace_rate": 5,
+        "payload": ["release.cmd"],
+        "objectives": [
+          {"type": "upload", "host": "10.40.3.1", "file": "release.cmd"}
+        ],
+        "hosts": {
+          "10.40.3.1": {
+            "name": "SL3-DOORS",
+            "security": 3,
+            "lock": "keypad",
+            "password": "ironwood",
+            "banner": "SL3 ACCESS CONTROL // ROOMS 301-304",
+            "files": {
+              "rooms.txt": "301  EMPTY\n302  EMPTY\n303  OCCUPIED  'C.'\n304  EMPTY",
+              "door.log": "01:58 room 303 meal tray delivered"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "requires": {"went_for_both": true},
+      "speaker": "CASSANDRA",
+      "text": "3:40 AM. Your private line rings.\n\n\"{handle}. It's me. I'm out. I walked straight up the fire stairs while every screen on SL2 went red.\n\nYou deleted the core. Four thousand names, gone. They'll rebuild it, but it'll take them a year.\n\nThey also know someone did it on purpose now. They'll come looking.\""
+    },
+    {
+      "type": "text",
+      "requires": {"rescue_only": true},
+      "speaker": "CASSANDRA",
+      "text": "3:40 AM. Your private line rings.\n\n\"{handle}. It's me. I'm out. The door just... opened. I didn't wait to ask why.\n\nBASILISK is still running. But we're both alive, and I know things about it now that nobody outside that building does.\""
+    },
+    {
+      "type": "text",
+      "cutscene": "BASILISK",
+      "speaker": "CASSANDRA",
+      "text": "\"My name is Dr. Elena Voss. I designed BASILISK. When I found out what Phase 3 was for, I tried to quit. They didn't let me.\n\nThere's a copy of the full Phase 3 plan. Not at the tower. At a government data centre in the mountains, somewhere called SITE NINE.\n\nGet some sleep. Then upgrade that rig of yours. Where we're going next doesn't use dial-up locks.\""
+    },
+    {
+      "type": "text",
+      "text": "END OF CHAPTER 3\n\nCASSANDRA is free. SITE NINE is waiting. Chapter 4 is coming.\n\nNew contracts are up on the Job Board."
+    }
+  ]
+}
